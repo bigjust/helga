@@ -21,9 +21,9 @@ def update_nick_map(nick_map):
     result = db.alias.replace_one({}, {'nick_map': nick_map}, True)
     logger.info('result.modified: %s', result.modified_count)
 
-def find_nick(nick):
+def find_aliases(nick):
     """
-    Returns list where nick is found in nick_map, else returns []
+    Returns a list of aliases where nick is found in nick_map, else returns []
     """
 
     matched_nick_list = []
@@ -56,8 +56,8 @@ def add_names(client, nicks):
     nick_map = get_nick_map()
 
     for nick in nicks:
-        found = find_nick(nick)
-        if not found:
+        aliases = find_aliases(nick)
+        if not aliases:
             nick_map.append([nick])
             update_nick_map(nick_map)
 
@@ -65,13 +65,13 @@ def add_names(client, nicks):
 def user_rename(client, oldname, newname):
 
     nick_map = get_nick_map()
-    nick_list = find_nick(oldname)
+    alias_list = find_aliases(oldname)
 
-    if not nick_list:
+    if not alias_list:
         nick_map.append([oldname, newname])
     else:
         for nlist in nick_map:
-            if nlist == nick_list:
+            if nlist == alias_list:
                 if newname not in nlist:
                     nlist.append(newname)
                 break
