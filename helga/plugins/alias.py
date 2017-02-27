@@ -47,8 +47,9 @@ def alias(client, channel, nick, message, cmd, args):
     logger.info('cmd: %s', cmd)
     logger.info('args: %s', args)
 
-    for nick_list in get_nick_map():
-        client.msg(channel, u'{}'.format(nick_list))
+    if not args:
+        for nick_list in get_nick_map():
+            client.msg(channel, u'{}'.format(nick_list))
 
 @smokesignal.on('names_reply')
 def add_names(client, nicks):
