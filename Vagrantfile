@@ -5,11 +5,10 @@
 VAGRANTFILE_API_VERSION = '2'.freeze
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  config.vm.box = 'precise64'
-  config.vm.box_url = 'http://files.vagrantup.com/precise64.box'
+  config.vm.box = "ubuntu/trusty64"
 
   # Forward keys from SSH agent rather than copypasta
-  config.ssh.forward_agent = true
+  config.vm.synced_folder "..", "/vagrant/helga-src"
 
   # FIXME: Might not even need this much
   config.vm.provider 'virtualbox' do |v|
@@ -61,4 +60,12 @@ sudo -u vagrant echo "#!/bin/bash" > /home/vagrant/.profile
 sudo -u vagrant echo "source /home/vagrant/helga_venv/bin/activate" >> /home/vagrant/.profile
 sudo -u vagrant echo "cd /vagrant/" >> /home/vagrant/.profile
 EOF
+
+  #config.vm.provision "ansible", run: "never" do |ansible|
+  config.vm.provision "ansible" do |ansible|
+    #ansible.galaxy_role_file = "ansible/requirements.yml"
+    ansible.playbook = "ansible/playbook.yml"
+    ansible.groups = {"vagrant" => ['default'],}
+  end
+
 end

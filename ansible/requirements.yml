@@ -1,0 +1,8 @@
+- name: bigjust.helga
+  src: https://github.com/bigjust/ansible-helga.git
+
+- name: bigjust.mongodb
+  src: https://github.com/bigjust/ansible-mongodb.git
+
+- name: eendroroy.pyenv
+  src: https://github.com/eendroroy/ansible-role-pyenv.git

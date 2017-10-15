@@ -45,3 +45,7 @@ my_settings.py
 /venv
 /env
 .env
+
+# Ansible
+ansible/playbook.retry
+ansible/roles
