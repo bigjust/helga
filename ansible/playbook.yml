@@ -1,0 +1,65 @@
+---
+
+- hosts: all
+
+  roles:
+    - role: bigjust.mongodb
+      mongodb_version: "3.4.5"
+      become: yes
+
+  post_tasks:
+    - name: Install system requirements
+      become: yes
+      apt: name={{ item }} update_cache=yes
+      with_items:
+        - git
+        - libffi6
+        - libffi-dev
+        - libssl-dev
+        - openssl
+        - python2.7
+        - python-pip
+        - python-virtualenv
+
+- hosts: vagrant
+
+  pre_tasks:
+    - name: install ngircd
+      become: yes
+      apt: name=ngircd
+
+    - name: make sure services are running.
+      become: yes
+      service: name={{ item }} state=started
+      with_items:
+        - ngircd
+
+  roles:
+    - role: bigjust.helga
+      helga_version: 1.7.6
+      #helga_source_dir: /vagrant/helga-source
+      helga_use_ssl: no
+      helga_nick: helga_dev
+      helga_irc_channels: ['#test']
+
+      helga_default_plugins:
+        # standard
+        - help
+        - operator
+        - version
+        - manager
+        - webhooks
+
+      helga_operators: []
+
+      helga_pypi_packages: []
+
+      helga_external_plugins: []
+      # Example, WIP plugin
+      #
+      # - name: awesome-plugin
+      #   src: /vagrant/helga-src/helga-awesome
+      #   state: forcereinstall
+
+      helga_settings_extra:
+        helga_debug: 'True'
