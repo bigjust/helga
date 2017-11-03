@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+
+  irc:
+    image: "yrpri/ngircd"
+    networks:
+      - helga
+    ports:
+      - "6667:6667"
+
+  mongo:
+    image: "mongo:3.4"
+    networks:
+      - helga
+    ports:
+      - "27017:27017"
+
+  helga:
+    build: .
+    networks:
+      - helga
+    depends_on:
+      - mongo
+      - irc
+
+networks:
+  helga:
+    driver: bridge

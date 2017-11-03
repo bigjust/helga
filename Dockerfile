@@ -1,29 +1,9 @@
-FROM ubuntu:16.04
+FROM python:2
 
-EXPOSE 6667 27017
-
-RUN apt-get update -qq
-RUN apt-get install -qqy \
-	git \
-	mongodb \
-	ngircd \
-	openssl \
-	libssl-dev \
-	python-dev \
-	python-pip \
-	python-setuptools \
-	libffi6 \
-	libffi-dev
-
-ADD . /opt/helga
 WORKDIR /opt/helga
 
-RUN sed -i -s 's/^bind_ip = 127.0.0.1/#bind_ip = 127.0.0.1/' /etc/mongodb.conf && service mongodb restart
+COPY . .
+RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install .
 
-RUN pip install --upgrade pip
-RUN pip install service_identity
-
-RUN cd /opt/helga && python setup.py install
-
-
-ENTRYPOINT ["/usr/local/bin/helga"]
+CMD ["helga","--settings=dev-settings.py"]
