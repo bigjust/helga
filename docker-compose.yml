@@ -18,7 +18,7 @@ services:
 
   helga:
     build: .
-    command: helga --settings=dev-settings.py
+    command: helga --settings=docker/dev-settings.py
     volumes:
       - .:/code
     networks:
