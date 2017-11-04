@@ -1,9 +1,8 @@
 FROM python:2
 
-WORKDIR /opt/helga
-
-COPY . .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN mkdir /code
+WORKDIR /code
+ADD requirements.txt /code/
+RUN pip install -r requirements.txt
+ADD . /code/
 RUN pip install .
-
-CMD ["helga","--settings=dev-settings.py"]

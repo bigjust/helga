@@ -18,6 +18,9 @@ services:
 
   helga:
     build: .
+    command: helga --settings=dev-settings.py
+    volumes:
+      - .:/code
     networks:
       - helga
     depends_on:
