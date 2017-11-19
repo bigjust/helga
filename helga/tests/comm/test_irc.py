@@ -268,3 +268,14 @@ class ClientTestCase(TestCase):
             self.client.log_channel_message('foo', 'bar', 'baz')
             self.client.get_channel_logger.assert_called_with('foo')
             logger.info.assert_called_with('baz', extra={'nick': 'bar'})
+
+    @patch('helga.comm.irc.smokesignal')
+    def test_userRenamed(self, signal):
+        user = 'helga!helgabot@127.0.0.1'
+        self.client.userRenamed(user, 'helga2!helgabot@127.0.0.1')
+        signal.emit.assert_called_with(
+            'user_rename',
+            self.client,
+            'helga!helgabot@127.0.0.1',
+            'helga2!helgabot@127.0.0.1'
+        )
