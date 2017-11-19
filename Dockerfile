@@ -1,8 +1,6 @@
 FROM python:2
 
-RUN mkdir /code
+ADD . /code
 WORKDIR /code
-ADD requirements.txt /code/
-RUN pip install -r requirements.txt
-ADD . /code/
+
 RUN pip install .
