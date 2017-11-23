@@ -15,9 +15,12 @@ services:
       - helga
     ports:
       - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
 
   helga:
     build: .
+    image: bigjust/helga
     command: helga --settings=docker/dev-settings.py
     volumes:
       - .:/code
@@ -30,3 +33,6 @@ services:
 networks:
   helga:
     driver: bridge
+
+volumes:
+  mongo_data:
