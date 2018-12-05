@@ -18,6 +18,7 @@ Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
   # Forward ports for irc(6667) and mongo(27017)
   config.vm.network :forwarded_port, guest: 6667, host: 6667
   config.vm.network :forwarded_port, guest: 27017, host: 27017
+  config.vm.network :forwarded_port, guest: 8080, host: 8080
 
   #config.vm.provision "ansible", run: "never" do |ansible|
   config.vm.provision "ansible" do |ansible|
