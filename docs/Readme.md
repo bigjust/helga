@@ -14,3 +14,5 @@ Dec 9th: starting to get the hang of this daily exercise thing! fixed
     [helga-mimic](https://github.com/bigjust/helga-mimic) where she would
     generate a mimic reply even if the message was a command, thus producing two
     confusing outputs. [issue](https://github.com/bigjust/helga-mimic/issues/3)
+
+Dec 10th: i rediscovered Kerbal Space Program, fuck you
