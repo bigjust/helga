@@ -44,11 +44,13 @@ setup(
         'helga': ['webhooks/logger/*.mustache'],
     },
     install_requires=[
+        'autobahn',
         'cffi',
         'decorator==3.4.0',
         'pymongo',
         'pyOpenSSL',
         'pystache==0.5.4',
+        'service_identity',
         'smokesignal==0.5',
         'Twisted',
     ],
