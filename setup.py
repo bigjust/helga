@@ -51,7 +51,7 @@ setup(
         'pystache==0.5.4',
         'smokesignal==0.5',
         'Twisted',
-    ] + extra_requires,
+    ],
     tests_require=[
         'freezegun',
         'mock',
