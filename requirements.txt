@@ -5,13 +5,3 @@
 #   for cffi==1.1.0, required by pyOpenSSL>=0.14:
 # libffi6
 # libffi-dev
-
-autobahn
-cffi
-decorator==3.4.0
-pymongo
-pyOpenSSL
-pystache==0.5.4
-smokesignal
-Twisted
-requests
