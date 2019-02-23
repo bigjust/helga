@@ -3,18 +3,18 @@ version: '3'
 services:
 
   irc:
-    image: "yrpri/ngircd"
+    image: yrpri/ngircd
     networks:
       - helga
     ports:
-      - "6667:6667"
+      - 6667:6667
 
   mongo:
-    image: "mongo:3.4"
+    image: mongo:3
     networks:
       - helga
     ports:
-      - "27017:27017"
+      - 27017:27017
     volumes:
       - mongo_data:/data/db
 
