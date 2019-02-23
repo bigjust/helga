@@ -20,7 +20,3 @@ DATABASE = {
     'PORT': 27017,
     'DB': os.environ.get('HELGA_MONGO_DB', 'helga')
 }
-
-ENABLED_PLUGINS = [
-    'yelling',
-]
