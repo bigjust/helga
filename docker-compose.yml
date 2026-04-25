@@ -1,12 +1,12 @@
 services:
 
   irc:
-    image: yrpri/ngircd
+    image: inspircd/inspircd-docker:latest
     ports:
       - 6667:6667
 
   mongo:
-    image: mongo:3
+    image: mongo:4
     ports:
       - 27017:27017
     volumes:
@@ -14,8 +14,7 @@ services:
 
   helga:
     build: .
-#    image: bigjust/helga
-#    command: helga --settings=settings-docker.py
+    command: --settings=/code/settings_docker.py
     environment:
       - HELGA_IRC_SERVER=irc
       - HELGA_MONGO_HOST=mongo
