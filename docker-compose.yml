@@ -14,7 +14,6 @@ services:
 
   helga:
     build: .
-    command: --settings=/code/settings_docker.py
     environment:
       - HELGA_IRC_SERVER=irc
       - HELGA_MONGO_HOST=mongo
