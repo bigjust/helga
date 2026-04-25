@@ -26,7 +26,7 @@ def run():
 
     factory = backend.Factory()
 
-    if settings.SERVER.get('TYPE', False) == 'slack':
+    if settings.SERVER.get('TYPE', False) in ('slack', 'discord'):
         connectWS(factory=factory)
     elif settings.SERVER.get('SSL', False):
         reactor.connectSSL(settings.SERVER['HOST'],

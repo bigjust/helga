@@ -176,7 +176,29 @@ configuration. Similarly, Slack uses the "@ mentions" syntax for addressing
 nicks, and the connector has support for this, so you should not set
 :data:`~helga.settings.COMMAND_PREFIX_BOTNICK` in your configuration.
 
+
+Discord Support
+^^^^^^^^^^^^^^^
+`Discord`_ supports bot connections over its gateway and HTTP APIs, and Helga
+includes a connector for Discord bots. A configuration for connecting to
+Discord might look like::
+
+    SERVER = {
+        'TYPE': 'discord',
+        'API_KEY': 'your-discord-bot-token',
+    }
+
+Discord uses bot tokens for authentication. Helga will learn the bot username
+during gateway startup and automatically set
+:data:`~helga.settings.COMMAND_PREFIX_BOTNICK` using the Discord username.
+Guild text channels are exposed to plugins as ``#channel-name`` and direct
+messages are exposed as usernames.
+
+The Discord connector currently handles inbound messages and outbound replies,
+but it does not support joining or leaving channels from Helga itself.
+
 .. _`HipChat`: https://www.hipchat.com/
 .. _`HipChat XMPP Settings`: https://hipchat.com/account/xmpp
 .. _`hipchat_nicks`: https://github.com/shaunduncan/helga-hipchat-nicks
 .. _`Slack`: https://www.slack.com/
+.. _`Discord`: https://discord.com/developers/docs/intro

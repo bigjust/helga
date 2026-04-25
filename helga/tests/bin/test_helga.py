@@ -47,6 +47,23 @@ class TestRun(object):
                 helga.reactor.connectSSL.assert_called_with('localhost', 6667, factory, ssl)
                 assert helga.reactor.run.called
 
+    def test_websocket_backend(self):
+        server = {
+            'TYPE': 'discord',
+        }
+
+        with patch.multiple(helga, smokesignal=Mock(), _get_backend=Mock(), connectWS=Mock(), reactor=Mock()):
+            with patch.object(helga.settings, 'SERVER', server):
+                factory = Mock()
+                helga._get_backend.return_value = helga._get_backend
+                helga._get_backend.Factory.return_value = factory
+
+                helga.run()
+
+                helga.smokesignal.emit.assert_called_with('started')
+                helga.connectWS.assert_called_with(factory=factory)
+                assert helga.reactor.run.called
+
 
 class TestMain(object):
 

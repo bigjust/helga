@@ -15,3 +15,4 @@ pystache==0.5.4
 smokesignal
 Twisted
 requests
+websocket-client
