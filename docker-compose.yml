@@ -1,5 +1,3 @@
-version: '3'
-
 services:
 
   irc:
@@ -16,8 +14,8 @@ services:
 
   helga:
     build: .
-    image: bigjust/helga
-    command: --settings=settings-docker.py
+#    image: bigjust/helga
+#    command: helga --settings=settings-docker.py
     environment:
       - HELGA_IRC_SERVER=irc
       - HELGA_MONGO_HOST=mongo
