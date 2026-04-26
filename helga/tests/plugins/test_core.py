@@ -65,12 +65,12 @@ class TestRegistry(object):
             self._make_mock(name='baz'),
         ]
 
-        with patch('helga.plugins.pkg_resources') as pkg_resources:
+        with patch('helga.plugins.iter_entry_points') as iter_entry_points:
             with patch('helga.plugins.settings') as settings:
                 settings.ENABLED_PLUGINS = setting
                 settings.DISABLED_PLUGINS = False
 
-                pkg_resources.iter_entry_points.return_value = entry_points
+                iter_entry_points.return_value = entry_points
 
                 with patch.object(Registry, '_Registry__instance', None):
                     reg = Registry()
@@ -89,12 +89,12 @@ class TestRegistry(object):
             self._make_mock(name='baz'),
         ]
 
-        with patch('helga.plugins.pkg_resources') as pkg_resources:
+        with patch('helga.plugins.iter_entry_points') as iter_entry_points:
             with patch('helga.plugins.settings') as settings:
                 settings.ENABLED_PLUGINS = True
                 settings.DISABLED_PLUGINS = setting
 
-                pkg_resources.iter_entry_points.return_value = entry_points
+                iter_entry_points.return_value = entry_points
 
                 with patch.object(Registry, '_Registry__instance', None):
                     reg = Registry()
@@ -115,13 +115,13 @@ class TestRegistry(object):
             self._make_mock(name='baz'),
         ]
 
-        with patch('helga.plugins.pkg_resources') as pkg_resources:
+        with patch('helga.plugins.iter_entry_points') as iter_entry_points:
             with patch('helga.plugins.settings') as settings:
                 settings.ENABLED_PLUGINS = whitelist
                 settings.DISABLED_PLUGINS = blacklist
                 settings.DEFAULT_CHANNEL_PLUGINS = ['foo', 'bar', 'baz']
 
-                pkg_resources.iter_entry_points.return_value = entry_points
+                iter_entry_points.return_value = entry_points
 
                 with patch.object(Registry, '_Registry__instance', None):
                     reg = Registry()
@@ -319,9 +319,9 @@ class TestRegistry(object):
         assert self.snowman not in registry.enabled_plugins['#foo']
 
     @patch('helga.plugins.logger')
-    @patch('helga.plugins.pkg_resources')
+    @patch('helga.plugins.iter_entry_points')
     @patch('helga.plugins.smokesignal')
-    def test_load(self, signal, pkg_resources, logger):
+    def test_load(self, signal, iter_entry_points, logger):
         entry_points = [
             Mock(load=lambda: 'foo'),
             Mock(load=lambda: 'snowman'),
@@ -334,7 +334,7 @@ class TestRegistry(object):
         entry_points[2].name = 'bar'
         entry_points[2].load.side_effect = Exception
 
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
 
         with patch.multiple(registry,
                             register=Mock(),
@@ -351,8 +351,8 @@ class TestRegistry(object):
         # Ensure that we sent the signal
         signal.emit.assert_called_with('plugins_loaded')
 
-    @patch('helga.plugins.pkg_resources')
-    def test_load_with_no_whitelist(self, pkg_resources):
+    @patch('helga.plugins.iter_entry_points')
+    def test_load_with_no_whitelist(self, iter_entry_points):
         entry_points = [
             Mock(),
             Mock(),
@@ -367,8 +367,8 @@ class TestRegistry(object):
                 entry_points[2].load.called,
             ])
 
-    @patch('helga.plugins.pkg_resources')
-    def test_load_skips_blacklisted(self, pkg_resources):
+    @patch('helga.plugins.iter_entry_points')
+    def test_load_skips_blacklisted(self, iter_entry_points):
         entry_points = [
             Mock(),
             Mock(),
@@ -382,7 +382,7 @@ class TestRegistry(object):
         whitelist = ['a', 'b', 'c']
         blacklist = ['foo', 'bar', 'baz']
 
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
 
         with patch.multiple(registry, whitelist_plugins=whitelist, blacklist_plugins=blacklist):
             registry.load()
@@ -392,8 +392,8 @@ class TestRegistry(object):
                 entry_points[2].load.called,
             ])
 
-    @patch('helga.plugins.pkg_resources')
-    def test_load_skips_non_whitelist(self, pkg_resources):
+    @patch('helga.plugins.iter_entry_points')
+    def test_load_skips_non_whitelist(self, iter_entry_points):
         entry_points = [
             Mock(),
             Mock(),
@@ -404,7 +404,7 @@ class TestRegistry(object):
         entry_points[1].name = 'bar'
         entry_points[2].name = 'baz'
 
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
 
         whitelist = ['a', 'b', 'c']
 
@@ -420,17 +420,17 @@ class TestRegistry(object):
         assert 'Unknown plugin' in registry.reload('foo')
         assert 'Unknown plugin' in registry.reload(self.snowman)
 
-    @patch('helga.plugins.pkg_resources')
+    @patch('helga.plugins.iter_entry_points')
     @patch('helga.plugins.sys')
     @patch('helga.plugins.reload')
-    def test_reload(self, reloader, sys, pkg_resources):
+    def test_reload(self, reloader, sys, iter_entry_points):
         entry_points = [
             Mock(module_name='foo', load=lambda: 'loaded'),
             Mock(module_name='snowman', load=lambda: 'loaded')
         ]
         entry_points[0].name = 'foo'
         entry_points[1].name = self.snowman
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
 
         sys.modules = {
             'foo': entry_points[0],
@@ -444,16 +444,16 @@ class TestRegistry(object):
                 assert registry.reload(name)
                 register.assert_called_with(name, 'loaded')
 
-    @patch('helga.plugins.pkg_resources')
+    @patch('helga.plugins.iter_entry_points')
     @patch('helga.plugins.sys')
     @patch('helga.plugins.reload')
-    def test_reload_returns_false_on_exception(self, reloader, sys, pkg_resources):
+    def test_reload_returns_false_on_exception(self, reloader, sys, iter_entry_points):
         module = Mock(module_name='foo')
         module.name = 'foo'
         module.load.side_effect = Exception
 
         entry_points = [module]
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
         sys.modules = {'foo': module}
         registry.plugins = ['foo']
 
