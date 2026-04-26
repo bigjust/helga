@@ -37,7 +37,12 @@ def iter_entry_points(group):
         try:
             return tuple(importlib_metadata.entry_points(group=group))
         except TypeError:  # pragma: no cover
-            return tuple(ep for ep in importlib_metadata.entry_points() if ep.group == group)
+            # Python 3.9 and earlier: entry_points() returns a dict
+            eps = importlib_metadata.entry_points()
+            if isinstance(eps, dict):
+                return tuple(eps.get(group, []))
+            # Python 3.10+: entry_points() returns SelectableGroups
+            return tuple(ep for ep in eps if ep.group == group)
 
     if pkg_resources is not None:
         return pkg_resources.iter_entry_points(group=group)
@@ -199,7 +204,7 @@ class Registry(object):
         return self.plugins.get(name, None)
 
     def disable(self, channel, *plugins):
-        """
+        r"""
         Disable a plugin or plugins on a desired channel
 
         :param channel: the desired chat channel
@@ -208,7 +213,7 @@ class Registry(object):
         self.enabled_plugins[channel] = self.enabled_plugins[channel].difference(set(plugins))
 
     def enable(self, channel, *plugins):
-        """
+        r"""
         Enable a plugin or plugins on a desired channel
 
         :param channel: the desired chat channel
@@ -551,7 +556,7 @@ class Command(Plugin):
         # Handle multiple ways to parse this command
         prefix_botnick = getattr(settings, 'COMMAND_PREFIX_BOTNICK', None)
         if prefix_botnick is not None:
-            fmt = '{0}\W*\s'
+            fmt = r'{0}\W*\s'
             if isinstance(prefix_botnick, str):
                 nick_prefix = fmt.format(prefix_botnick)
             elif prefix_botnick:
