@@ -6,6 +6,11 @@ from __future__ import absolute_import
 from importlib import reload
 
 try:
+    from importlib import metadata as importlib_metadata
+except ImportError:  # pragma: no cover
+    importlib_metadata = None
+
+try:
     import pkg_resources
 except ImportError:  # pragma: no cover
     pkg_resources = None
@@ -28,8 +33,15 @@ logger = log.getLogger(__name__)
 
 
 def iter_entry_points(group):
+    if importlib_metadata is not None:
+        try:
+            return tuple(importlib_metadata.entry_points(group=group))
+        except TypeError:  # pragma: no cover
+            return tuple(ep for ep in importlib_metadata.entry_points() if ep.group == group)
+
     if pkg_resources is not None:
         return pkg_resources.iter_entry_points(group=group)
+
     return ()
 
 
