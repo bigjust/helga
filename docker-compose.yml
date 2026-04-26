@@ -6,11 +6,14 @@ services:
       - 6667:6667
 
   mongo:
-    image: mongo:4
+    image: mongo:7
+    platform: linux/amd64
     ports:
       - 27017:27017
     volumes:
       - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=helga
 
   helga:
     build: .
