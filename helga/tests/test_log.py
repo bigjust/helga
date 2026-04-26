@@ -52,7 +52,7 @@ def test_get_logger_uses_log_file(settings, logging):
 
     log.getLogger('foo')
     logging.handlers.RotatingFileHandler.assert_called_with(filename=settings.LOG_FILE,
-                                                            maxBytes=50*1024*1024,
+                                                            maxBytes=50 * 1024 * 1024,
                                                             backupCount=6)
 
 

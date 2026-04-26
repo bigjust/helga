@@ -1,0 +1,31 @@
+[flake8]
+max-line-length = 100
+exclude =
+    .git,
+    __pycache__,
+    .tox,
+    .eggs,
+    *.egg,
+    build,
+    dist,
+    docs
+ignore =
+    # Missing docstrings
+    D100, D101, D102, D103, D104, D105, D107,
+    # Docstring formatting
+    D200, D202, D204, D205, D400, D401,
+    # Import order (handled separately if needed)
+    I100, I101, I201, I202,
+    # Lambda assignments (common in tests)
+    E731,
+    # Line too long (using max-line-length instead)
+    E501,
+    # Line break style (minor)
+    W504,
+    # Invalid escape sequences (handled by raw strings where needed)
+    W605,
+    # Blank line at end of file
+    W391
+per-file-ignores =
+    # Tests can have additional relaxed rules
+    helga/tests/*:F401,F811

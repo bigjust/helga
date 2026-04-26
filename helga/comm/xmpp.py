@@ -1,8 +1,6 @@
 import time
 import uuid
 
-from collections import defaultdict
-
 from twisted.internet import protocol, reactor, task
 from twisted.words.xish import domish, xpath
 from twisted.words.xish.xmlstream import XmlStreamFactoryMixin
