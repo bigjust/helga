@@ -20,9 +20,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
 
+# Set working directory for builder stage
+WORKDIR /build
+
 # Copy only requirements first for better caching
 COPY requirements.txt .
-RUN pip install --upgrade pip setuptools wheel && \
+RUN pip install --upgrade pip==24.0 setuptools==69.5.1 wheel==0.43.0 && \
     pip install -r requirements.txt
 
 # Copy application code
