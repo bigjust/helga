@@ -10,7 +10,12 @@ decorator
 pymongo
 pyOpenSSL
 pystache
+requests
 smokesignal
 Twisted
-requests
 websocket-client
+
+# Additional dependencies required by Twisted
+service-identity
+pyasn1
+pyasn1-modules

@@ -42,6 +42,9 @@ dependencies = [
     "Twisted",
     "requests",
     "websocket-client",
+    "service-identity",
+    "pyasn1",
+    "pyasn1-modules",
 ]
 
 [project.optional-dependencies]
