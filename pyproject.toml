@@ -1,0 +1,235 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "helga"
+version = "2.0.0"
+description = "A full-featured chat bot for Python 3.7+ with plugin support"
+readme = "README.rst"
+requires-python = ">=3.7"
+license = {text = "MIT OR GPL-3.0-or-later"}
+authors = [
+    {name = "Shaun Duncan", email = "shaun.duncan@gmail.com"}
+]
+keywords = ["helga", "bot", "irc", "xmpp", "jabber", "hipchat", "chat", "slack", "discord"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Topic :: Communications :: Chat :: Internet Relay Chat",
+    "Framework :: Twisted",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dependencies = [
+    "autobahn",
+    "cffi",
+    "decorator",
+    "pymongo",
+    "pyOpenSSL",
+    "pystache",
+    "smokesignal",
+    "Twisted",
+    "requests",
+    "websocket-client",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.0.0",
+    "ruff>=0.6.0",
+    "mypy>=1.11.0",
+    "pre-commit>=3.8.0",
+    "pytest>=8.0.0",
+    "pytest-cov>=5.0.0",
+    "pytest-asyncio>=0.24.0",
+    "freezegun",
+    "mock",
+    "pretend",
+    "tox>=4.0.0",
+]
+docs = [
+    "sphinx>=7.0.0",
+    "sphinx-rtd-theme>=2.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/shaunduncan/helga"
+Documentation = "https://helga.readthedocs.org"
+Repository = "https://github.com/shaunduncan/helga"
+Issues = "https://github.com/shaunduncan/helga/issues"
+Changelog = "https://github.com/shaunduncan/helga/blob/master/CHANGELOG.rst"
+
+[project.scripts]
+helga = "helga.bin.helga:main"
+
+[project.entry-points.helga_plugins]
+help = "helga.plugins.help:help"
+manager = "helga.plugins.manager:manager"
+operator = "helga.plugins.operator:operator"
+ping = "helga.plugins.ping:ping"
+version = "helga.plugins.version:version"
+webhooks = "helga.plugins.webhooks:WebhookPlugin"
+
+[project.entry-points.helga_webhooks]
+announcements = "helga.webhooks.announcements:announce"
+logger = "helga.webhooks.logger:logger"
+
+[tool.setuptools]
+packages = ["helga"]
+
+[tool.setuptools.package-data]
+helga = ["webhooks/logger/*.mustache"]
+
+# Black configuration
+[tool.black]
+line-length = 100
+target-version = ["py37", "py38", "py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# Ruff configuration
+[tool.ruff]
+line-length = 100
+target-version = "py37"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "ARG", # flake8-unused-arguments
+    "SIM", # flake8-simplify
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "C901",  # too complex
+    "W191",  # indentation contains tabs
+]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]  # unused imports in __init__.py
+"helga/tests/**/*.py" = ["ARG", "S101"]  # Allow unused args and asserts in tests
+
+[tool.ruff.lint.isort]
+known-first-party = ["helga"]
+
+# Mypy configuration
+[tool.mypy]
+python_version = "3.7"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false
+disallow_incomplete_defs = false
+check_untyped_defs = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+follow_imports = "normal"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "helga.tests.*"
+ignore_errors = true
+
+# Pytest configuration
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["helga/tests"]
+norecursedirs = ["lib", ".git", ".tox", "dist", "build", "*.egg"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--cov=helga",
+    "--cov-report=term-missing",
+    "--cov-report=html",
+    "--cov-report=xml",
+]
+
+[tool.coverage.run]
+source = ["helga"]
+omit = ["*/tests/*", "*/test_*.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+[tool.tox]
+legacy_tox_ini = """
+[tox]
+envlist = py37,py38,py39,py310,py311,py312,py313,lint,type
+isolated_build = true
+
+[testenv]
+deps =
+    pytest
+    pytest-cov
+    mock
+    pretend
+    freezegun
+setenv =
+    HELGA_SETTINGS=
+commands =
+    pytest {posargs}
+
+[testenv:lint]
+deps =
+    ruff
+    black
+skip_install = true
+commands =
+    ruff check helga
+    black --check helga
+
+[testenv:type]
+deps =
+    mypy
+    types-requests
+commands =
+    mypy helga
+
+[testenv:docs]
+deps =
+    sphinx
+    sphinx_rtd_theme
+commands =
+    sphinx-build -a -b html {toxinidir}/docs/source {toxinidir}/docs/build/html
+"""
