@@ -1,91 +1,88 @@
 import os
-import subprocess
-import sys
-
 from setuptools import setup, find_packages
-from setuptools.command.test import test as TestCommand
-
-import helga
 
 
 def parse_requirements(filename):
+    """Parse requirements from a requirements file."""
     with open(filename, 'r') as f:
         for line in f:
-            if line.strip().startswith('#'):
-                continue
-            yield line
+            line = line.strip()
+            if line and not line.startswith('#'):
+                yield line
 
 
-class PyTest(TestCommand):
-    def finalize_options(self):
-        TestCommand.finalize_options(self)
-        self.test_args = []
-        self.test_suite = True
-
-    def run_tests(self):
-        return subprocess.call('tox')
-
-
-# Get the long description
-with open(os.path.join(os.path.dirname(__file__), 'README.rst'), 'r') as f:
-    long_description = f.read()
+def get_version():
+    """Get version from helga/__init__.py without importing it."""
+    version_file = os.path.join(os.path.dirname(__file__), 'helga', '__init__.py')
+    with open(version_file, 'r') as f:
+        for line in f:
+            if line.startswith('__version__'):
+                # Extract version string
+                return line.split('=')[1].strip().strip("'\"")
+    raise RuntimeError('Unable to find version string.')
 
 
-setup(name=helga.__title__,
-      version=helga.__version__,
-      description=helga.__description__,
-      long_description=long_description,
-      classifiers=[
-          'Development Status :: 5 - Production/Stable',
-          'Topic :: Communications :: Chat :: Internet Relay Chat',
-          'Framework :: Twisted',
-          'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
-          'License :: OSI Approved :: MIT License',
-          'Operating System :: OS Independent',
-          'Programming Language :: Python',
-          'Programming Language :: Python :: 3',
-          'Programming Language :: Python :: 3.7',
-          'Programming Language :: Python :: 3.8',
-          'Programming Language :: Python :: 3.9',
-          'Programming Language :: Python :: 3.10',
-          'Programming Language :: Python :: 3.11',
-          'Programming Language :: Python :: 3.12',
-          'Topic :: Software Development :: Libraries :: Python Modules',
-      ],
-      python_requires='>=3.7',
-      keywords='helga bot irc xmpp jabber hipchat chat',
-      author=helga.__author__,
-      author_email='shaun.duncan@gmail.com',
-      url='https://github.com/shaunduncan/helga',
-      license=helga.__license__,
-      packages=find_packages(),
-      package_data={
-          'helga': ['webhooks/logger/*.mustache'],
-      },
-      install_requires=list(parse_requirements('requirements.txt')),
-      tests_require=[
-          'freezegun',
-          'mock',
-          'pretend',
-          'tox',
-          'pytest',
-      ],
-      cmdclass={'test': PyTest},
-      entry_points=dict(
-          helga_plugins=[
-              'help     = helga.plugins.help:help',
-              'manager  = helga.plugins.manager:manager',
-              'operator = helga.plugins.operator:operator',
-              'ping     = helga.plugins.ping:ping',
-              'version  = helga.plugins.version:version',
-              'webhooks = helga.plugins.webhooks:WebhookPlugin',
-          ],
-          helga_webhooks=[
-              'announcements = helga.webhooks.announcements:announce',
-              'logger        = helga.webhooks.logger:logger'
-          ],
-          console_scripts=[
-              'helga = helga.bin.helga:main',
-          ],
-      ),
+def get_long_description():
+    """Get the long description from README.rst."""
+    readme_path = os.path.join(os.path.dirname(__file__), 'README.rst')
+    with open(readme_path, 'r') as f:
+        return f.read()
+
+
+# For backward compatibility, setup.py still works
+# but pyproject.toml is now the primary configuration
+setup(
+    name='helga',
+    version=get_version(),
+    description='A full-featured chat bot for Python 3.7+ with plugin support',
+    long_description=get_long_description(),
+    long_description_content_type='text/x-rst',
+    author='Shaun Duncan',
+    author_email='shaun.duncan@gmail.com',
+    url='https://github.com/shaunduncan/helga',
+    license='MIT OR GPL-3.0-or-later',
+    packages=find_packages(),
+    package_data={
+        'helga': ['webhooks/logger/*.mustache'],
+    },
+    install_requires=list(parse_requirements('requirements.txt')),
+    python_requires='>=3.7',
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Topic :: Communications :: Chat :: Internet Relay Chat',
+        'Framework :: Twisted',
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+        'License :: OSI Approved :: MIT License',
+        'Operating System :: OS Independent',
+        'Programming Language :: Python',
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
+        'Programming Language :: Python :: 3.9',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
+        'Topic :: Software Development :: Libraries :: Python Modules',
+    ],
+    keywords='helga bot irc xmpp jabber hipchat chat slack discord',
+    entry_points={
+        'helga_plugins': [
+            'help = helga.plugins.help:help',
+            'manager = helga.plugins.manager:manager',
+            'operator = helga.plugins.operator:operator',
+            'ping = helga.plugins.ping:ping',
+            'version = helga.plugins.version:version',
+            'webhooks = helga.plugins.webhooks:WebhookPlugin',
+        ],
+        'helga_webhooks': [
+            'announcements = helga.webhooks.announcements:announce',
+            'logger = helga.webhooks.logger:logger',
+        ],
+        'console_scripts': [
+            'helga = helga.bin.helga:main',
+        ],
+    },
 )
+
+# Made with Bob
