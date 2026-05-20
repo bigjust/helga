@@ -1,6 +1,7 @@
 """
 Logging utilities for helga
 """
+
 import datetime
 import logging
 import logging.handlers
@@ -26,15 +27,15 @@ def getLogger(name):
 
     # Setup the default handler
     if settings.LOG_FILE:
-        handler = logging.handlers.RotatingFileHandler(filename=settings.LOG_FILE,
-                                                       maxBytes=50 * 1024 * 1024,
-                                                       backupCount=6)
+        handler = logging.handlers.RotatingFileHandler(
+            filename=settings.LOG_FILE, maxBytes=50 * 1024 * 1024, backupCount=6
+        )
     else:
         handler = logging.StreamHandler()
         handler.stream = sys.stdout
 
     # Setup formatting
-    default_format = '%(asctime)-15s [%(levelname)s] [%(name)s:%(lineno)d]: %(message)s'
+    default_format = "%(asctime)-15s [%(levelname)s] [%(name)s:%(lineno)d]: %(message)s"
     formatter = logging.Formatter(settings.LOG_FORMAT or default_format)
 
     handler.setFormatter(formatter)
@@ -49,7 +50,7 @@ def get_channel_logger(channel):
 
     :param channel: the channel name for the desired logger
     """
-    logger = logging.getLogger(u'channel_logger/{0}'.format(channel))
+    logger = logging.getLogger(f"channel_logger/{channel}")
     logger.setLevel(logging.INFO)
     logger.propagate = False
     logger.addFilter(UTCTimeLogFilter())
@@ -61,7 +62,7 @@ def get_channel_logger(channel):
 
     # Setup a daily rotating file handler
     handler = ChannelLogFileHandler(log_dir)
-    handler.setFormatter(logging.Formatter(u'%(utctime)s - %(nick)s - %(message)s'))
+    handler.setFormatter(logging.Formatter("%(utctime)s - %(nick)s - %(message)s"))
     logger.addHandler(handler)
 
     return logger
@@ -82,7 +83,7 @@ class UTCTimeLogFilter(logging.Filter):
         * ``utctime``: the time formatted string of ``utcnow`` in the form ``HH:MM:SS``
         """
         record.utcnow = datetime.datetime.utcnow()
-        record.utctime = record.utcnow.strftime('%H:%M:%S')
+        record.utctime = record.utcnow.strftime("%H:%M:%S")
         return True
 
 
@@ -100,10 +101,10 @@ class ChannelLogFileHandler(logging.handlers.BaseRotatingHandler):
         filename = os.path.join(basedir, self.current_filename())
         self.next_rollover = self.compute_next_rollover()
         try:
-            super(logging.handlers.BaseRotatingHandler, self).__init__(filename, 'a')
+            super(logging.handlers.BaseRotatingHandler, self).__init__(filename, "a")
         except TypeError:  # pragma: no cover Python >= 2.7
             # python 2.6 uses old-style classes for logging.Handler
-            logging.handlers.BaseRotatingHandler.__init__(self, filename, 'a')
+            logging.handlers.BaseRotatingHandler.__init__(self, filename, "a")
 
     def compute_next_rollover(self):
         """
@@ -119,7 +120,7 @@ class ChannelLogFileHandler(logging.handlers.BaseRotatingHandler):
         """
         Returns a UTC dated filename suitable as a log file. Example: 2014-12-15.txt
         """
-        return datetime.datetime.utcnow().strftime('%Y-%m-%d.txt')
+        return datetime.datetime.utcnow().strftime("%Y-%m-%d.txt")
 
     def shouldRollover(self, record):
         """

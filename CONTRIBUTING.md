@@ -31,11 +31,14 @@ Be respectful, inclusive, and professional. We're all here to make Helga better.
 
 1. Fork the repository on GitHub
 2. Clone your fork:
+
    ```bash
    git clone https://github.com/YOUR_USERNAME/helga.git
    cd helga
    ```
+
 3. Add upstream remote:
+
    ```bash
    git remote add upstream https://github.com/shaunduncan/helga.git
    ```
@@ -122,6 +125,7 @@ git commit -m "feat: add new feature"
 ```
 
 **Commit Message Format:**
+
 ```
 <type>: <description>
 
@@ -131,6 +135,7 @@ git commit -m "feat: add new feature"
 ```
 
 **Types:**
+
 - `feat`: New feature
 - `fix`: Bug fix
 - `docs`: Documentation changes
@@ -377,6 +382,7 @@ For maintainers:
 ### Version Numbering
 
 We follow [Semantic Versioning](https://semver.org/):
+
 - MAJOR: Breaking changes
 - MINOR: New features (backward compatible)
 - PATCH: Bug fixes
@@ -386,14 +392,18 @@ We follow [Semantic Versioning](https://semver.org/):
 1. **Update version** in `helga/__init__.py` and `pyproject.toml`
 2. **Update CHANGELOG.rst** with release notes
 3. **Commit changes**:
+
    ```bash
    git commit -m "chore: bump version to X.Y.Z"
    ```
+
 4. **Create tag**:
+
    ```bash
    git tag -a vX.Y.Z -m "Release X.Y.Z"
    git push origin vX.Y.Z
    ```
+
 5. **Create GitHub Release** - CI will automatically:
    - Build packages
    - Publish to PyPI
@@ -405,11 +415,12 @@ We follow [Semantic Versioning](https://semver.org/):
 - **Questions?** Open a discussion on GitHub
 - **Bug reports?** Open an issue with details
 - **IRC:** Join #helgabot on Freenode
-- **Documentation:** https://helga.readthedocs.org
+- **Documentation:** <https://helga.readthedocs.org>
 
 ## Recognition
 
 Contributors are recognized in:
+
 - GitHub contributors page
 - Release notes
 - Project documentation

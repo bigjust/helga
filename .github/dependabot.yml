@@ -4,68 +4,68 @@
 version: 2
 updates:
   # Python dependencies
-  - package-ecosystem: "pip"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 10
-    labels:
-      - "dependencies"
-      - "python"
-    commit-message:
-      prefix: "deps"
-      include: "scope"
-    groups:
+- package-ecosystem: pip
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+    time: 09:00
+  open-pull-requests-limit: 10
+  labels:
+  - dependencies
+  - python
+  commit-message:
+    prefix: deps
+    include: scope
+  groups:
       # Group development dependencies together
-      dev-dependencies:
-        patterns:
-          - "pytest*"
-          - "black"
-          - "ruff"
-          - "mypy"
-          - "tox"
-          - "pre-commit"
-        update-types:
-          - "minor"
-          - "patch"
+    dev-dependencies:
+      patterns:
+      - pytest*
+      - black
+      - ruff
+      - mypy
+      - tox
+      - pre-commit
+      update-types:
+      - minor
+      - patch
       # Group documentation dependencies
-      docs-dependencies:
-        patterns:
-          - "sphinx*"
-        update-types:
-          - "minor"
-          - "patch"
+    docs-dependencies:
+      patterns:
+      - sphinx*
+      update-types:
+      - minor
+      - patch
 
   # GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "github-actions"
-    commit-message:
-      prefix: "ci"
-      include: "scope"
+- package-ecosystem: github-actions
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+    time: 09:00
+  open-pull-requests-limit: 5
+  labels:
+  - dependencies
+  - github-actions
+  commit-message:
+    prefix: ci
+    include: scope
 
   # Docker
-  - package-ecosystem: "docker"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "docker"
-    commit-message:
-      prefix: "docker"
-      include: "scope"
+- package-ecosystem: docker
+  directory: /
+  schedule:
+    interval: weekly
+    day: monday
+    time: 09:00
+  open-pull-requests-limit: 5
+  labels:
+  - dependencies
+  - docker
+  commit-message:
+    prefix: docker
+    include: scope
 
 # Made with Bob

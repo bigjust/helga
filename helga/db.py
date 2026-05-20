@@ -12,8 +12,8 @@
 
 .. _`pymongo`: http://api.mongodb.org/python/current/
 """
-import warnings
 
+import warnings
 
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
@@ -29,18 +29,18 @@ def connect():
 
     :returns: A two-tuple of (`pymongo.MongoClient`, `pymongo.database.Database`)
     """
-    db_settings = getattr(settings, 'DATABASE', {})
+    db_settings = getattr(settings, "DATABASE", {})
 
     try:
-        client = MongoClient(db_settings['HOST'], db_settings['PORT'])
+        client = MongoClient(db_settings["HOST"], db_settings["PORT"])
     except ConnectionFailure:
-        warnings.warn('MongoDB is not available. Some features may not work')
+        warnings.warn("MongoDB is not available. Some features may not work", stacklevel=2)
         return None, None
     else:
-        db = client[db_settings['DB']]
+        db = client[db_settings["DB"]]
 
-        if 'USERNAME' in db_settings and 'PASSWORD' in db_settings:
-            db.authenticate(db_settings['USERNAME'], db_settings['PASSWORD'])
+        if "USERNAME" in db_settings and "PASSWORD" in db_settings:
+            db.authenticate(db_settings["USERNAME"], db_settings["PASSWORD"])
 
         return client, db
 

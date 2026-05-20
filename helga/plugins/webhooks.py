@@ -21,6 +21,7 @@ registered, using setuptools entry_points. However, they must belong to the entr
 
 For more information, see :ref:`webhooks`
 """
+
 import functools
 import re
 
@@ -29,15 +30,13 @@ try:
 except ImportError:  # pragma: no cover
     pkg_resources = None
 
-from twisted.internet import reactor
-from twisted.web import server, resource
-from twisted.web.error import Error
-
 import smokesignal
+from twisted.internet import reactor
+from twisted.web import resource, server
+from twisted.web.error import Error
 
 from helga import log, settings
 from helga.plugins import Command, registry
-
 
 logger = log.getLogger(__name__)
 
@@ -67,10 +66,13 @@ class WebhookPlugin(Command):
     and blacklist controls to limit loading webhook routes (see :data:`~helga.settings.ENABLED_WEBHOOKS`
     and :data:`~helga.settings.DISABLED_WEBHOOKS`)
     """
-    command = 'webhooks'
-    help = ('HTTP service for interacting with helga. Command options usage: '
-            'helga webhooks (start|stop|routes). Note: start/stop'
-            'can be run only by helga operators')
+
+    command = "webhooks"
+    help = (
+        "HTTP service for interacting with helga. Command options usage: "
+        "helga webhooks (start|stop|routes). Note: start/stop"
+        "can be run only by helga operators"
+    )
 
     def __init__(self, *args, **kwargs):
         super(Command, self).__init__(*args, **kwargs)
@@ -81,14 +83,14 @@ class WebhookPlugin(Command):
         # or match would fail to load.
         self.root = WebhookRoot()
         self.site = server.Site(self.root)
-        self.port = getattr(settings, 'WEBHOOKS_PORT', 8080)
+        self.port = getattr(settings, "WEBHOOKS_PORT", 8080)
 
-        self.webhook_names = set(ep.name for ep in iter_entry_points('helga_webhooks'))
+        self.webhook_names = {ep.name for ep in iter_entry_points("helga_webhooks")}
 
-        self.whitelist_webhooks = self._create_webhook_list('ENABLED_WEBHOOKS', default=True)
-        self.blacklist_webhooks = self._create_webhook_list('DISABLED_WEBHOOKS', default=True)
+        self.whitelist_webhooks = self._create_webhook_list("ENABLED_WEBHOOKS", default=True)
+        self.blacklist_webhooks = self._create_webhook_list("DISABLED_WEBHOOKS", default=True)
 
-        @smokesignal.on('signon')
+        @smokesignal.on("signon")
         def setup(client):  # pragma: no cover
             self._start(client)
             self._init_routes()
@@ -112,31 +114,31 @@ class WebhookPlugin(Command):
         webhook whitelist and blacklist
         """
         if not self.whitelist_webhooks:
-            logger.debug('Webhook whitelist was empty, none, or false. Skipping')
+            logger.debug("Webhook whitelist was empty, none, or false. Skipping")
             return
 
-        for entry_point in iter_entry_points('helga_webhooks'):
+        for entry_point in iter_entry_points("helga_webhooks"):
             if entry_point.name in self.blacklist_webhooks:
-                logger.info('Skipping blacklisted webhook %s', entry_point.name)
+                logger.info("Skipping blacklisted webhook %s", entry_point.name)
                 continue
 
             if entry_point.name not in self.whitelist_webhooks:
-                logger.info('Skipping non-whitelisted webhook %s', entry_point.name)
+                logger.info("Skipping non-whitelisted webhook %s", entry_point.name)
                 continue
 
             try:
-                logger.info('Loading webhook %s', entry_point.name)
+                logger.info("Loading webhook %s", entry_point.name)
                 entry_point.load()
             except Exception:
-                logger.exception('Error loading webhook %s', entry_point)
+                logger.exception("Error loading webhook %s", entry_point)
 
     def _start(self, client=None):
-        logger.info('Starting webhooks service on port %s', self.port)
+        logger.info("Starting webhooks service on port %s", self.port)
         self.root.chat_client = client
         self.tcp = reactor.listenTCP(self.port, self.site)
 
     def _stop(self):
-        logger.info('Stopping webhooks service on port %s', self.port)
+        logger.info("Stopping webhooks service on port %s", self.port)
         self.tcp.stopListening()
         self.tcp.loseConnection()
         self.tcp = None
@@ -159,10 +161,10 @@ class WebhookPlugin(Command):
         :param client: an instance of :class:`helga.comm.irc.Client` or :class:`helga.comm.xmpp.Client`
         :param nick: the nick of the chat user to message
         """
-        client.msg(nick, u'{0}, here are the routes I know about'.format(nick))
+        client.msg(nick, f"{nick}, here are the routes I know about")
         for pattern, route in self.root.routes.items():
             http_methods = route[0]  # Route is a tuple (http_methods, function)
-            client.msg(nick, u'[{0}] {1}'.format(','.join(http_methods), pattern))
+            client.msg(nick, "[{}] {}".format(",".join(http_methods), pattern))
 
     def control(self, action):
         """
@@ -172,30 +174,30 @@ class WebhookPlugin(Command):
         """
         running = self.tcp is not None
 
-        if action == 'stop':
+        if action == "stop":
             if running:
                 self._stop()
-                return u"Webhooks service stopped"
-            return u"Webhooks service not running"
+                return "Webhooks service stopped"
+            return "Webhooks service not running"
 
-        if action == 'start':
+        if action == "start":
             if not running:
                 self._start()
-                return u"Webhooks service started"
-            return u"Webhooks service already running"
+                return "Webhooks service started"
+            return "Webhooks service already running"
 
     def run(self, client, channel, nick, msg, cmd, args):
         try:
             subcmd = args[0]
         except IndexError:
-            subcmd = 'routes'
+            subcmd = "routes"
 
-        if subcmd == 'routes':
-            client.me(channel, u'whispers to {0}'.format(nick))
+        if subcmd == "routes":
+            client.me(channel, f"whispers to {nick}")
             self.list_routes(client, nick)
-        elif subcmd in ('start', 'stop'):
+        elif subcmd in ("start", "stop"):
             if nick not in client.operators:
-                return u"Sorry {0}, Only an operator can do that".format(nick)
+                return f"Sorry {nick}, Only an operator can do that"
             return self.control(subcmd)
 
 
@@ -205,6 +207,7 @@ class WebhookRoot(resource.Resource):
     manages all registered webhook route handlers, manages running them, and manages
     returning any responses generated.
     """
+
     isLeaf = True
 
     def __init__(self, *args, **kwargs):
@@ -240,20 +243,20 @@ class WebhookRoot(resource.Resource):
         :param request: The incoming HTTP request, ``twisted.web.http.Request``
         :returns: a string with the HTTP response content
         """
-        request.setHeader('Server', 'helga')
+        request.setHeader("Server", "helga")
         for pat, route in self.routes.items():
             match = re.match(pat, request.path)
             if match:
                 break
         else:
             request.setResponseCode(404)
-            return '404 Not Found'
+            return "404 Not Found"
 
         # Ensure that this route handles the request method
         methods, fn = route
         if request.method.upper() not in methods:
             request.setResponseCode(405)
-            return '405 Method Not Allowed'
+            return "405 Method Not Allowed"
 
         # Handle raised HttpErrors
         try:
@@ -273,15 +276,17 @@ def authenticated(fn):
 
     :param fn: the route handler to decorate
     """
+
     @functools.wraps(fn)
     def ensure_authenticated(request, *args, **kwargs):
-        for user, password in getattr(settings, 'WEBHOOKS_CREDENTIALS', []):
+        for user, password in getattr(settings, "WEBHOOKS_CREDENTIALS", []):
             if user == request.getUser() and password == request.getPassword():
                 return fn(request, *args, **kwargs)
 
         # No valid basic auth provided
         request.setResponseCode(401)
-        return '401 Unauthorized'
+        return "401 Unauthorized"
+
     return ensure_authenticated
 
 
@@ -304,9 +309,9 @@ def route(path, methods=None):
                        or :class:`helga.comm.xmpp.Client`
         :returns: a string HTTP response
     """
-    plugin = registry.get_plugin('webhooks')
+    plugin = registry.get_plugin("webhooks")
     if methods is None:
-        methods = ['GET']
+        methods = ["GET"]
 
     def wrapper(fn):
         if plugin is not None:

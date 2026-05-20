@@ -1,6 +1,7 @@
 """
 Default settings and configuration utilities
 """
+
 import os
 import sys
 
@@ -24,21 +25,21 @@ import sys
 #: - ``MUC_HOST``: the MUC group chat domain like 'conference.example.com' for group chat
 #: - ``JID``: A full jabber ID to use instead of USERNAME (xmpp only)
 SERVER = {
-    'HOST': 'localhost',
-    'PORT': 6667,
-    'TYPE': 'irc',
+    "HOST": "localhost",
+    "PORT": 6667,
+    "TYPE": "irc",
 }
 
 
 #: A string for the logging level helga should use for process logging
-LOG_LEVEL = 'DEBUG'
+LOG_LEVEL = "DEBUG"
 
 #: A string, if set, a string indicating the log file for python logs. By default helga
 #: will log directly to stdout
 LOG_FILE = None
 
 #: A string that is compatible with configuring a python logging formatter.
-LOG_FORMAT = '%(asctime)-15s [%(levelname)s] [%(name)s:%(lineno)d]: %(message)s'
+LOG_FORMAT = "%(asctime)-15s [%(levelname)s] [%(name)s:%(lineno)d]: %(message)s"
 
 #: Integer value for 'low' priority plugins (see :ref:`plugins.priorities`)
 PLUGIN_PRIORITY_LOW = 25
@@ -54,14 +55,14 @@ CHANNEL_LOGGING = False
 
 #: If :data:`CHANNEL_LOGGING` is enabled, this is a string of the directory to which channel logs
 #: should be written.
-CHANNEL_LOGGING_DIR = '.logs'
+CHANNEL_LOGGING_DIR = ".logs"
 
 #: A list of channel names (either with or without a '#' prefix) that will be hidden in the
 #: browsable channel log web ui.
 CHANNEL_LOGGING_HIDE_CHANNELS = []
 
 #: The preferred nick of the bot instance. For XMPP clients, this will be used when joining rooms.
-NICK = 'helga'
+NICK = "helga"
 
 #: A list of channels to automatically join. You can specify either a single channel name
 #: or a two-tuple of channel name, and password. For example::
@@ -80,7 +81,7 @@ NICK = 'helga'
 #: on the configuration, the room JID will be constructed using the ``MUC_HOST`` value of the
 #: ``SERVER`` setting or by prefixing 'conference.' to the ``HOST`` value.
 CHANNELS = [
-    ('#bots',),
+    ("#bots",),
 ]
 
 #: A boolean indicating if the bot automatically reconnect on connection lost
@@ -110,9 +111,9 @@ OPERATORS = []
 #:         'PASSWORD': 'bar',
 #:     }
 DATABASE = {
-    'HOST': 'localhost',
-    'PORT': 27017,
-    'DB': 'helga',
+    "HOST": "localhost",
+    "PORT": 27017,
+    "DB": "helga",
 }
 
 #: A list of plugin names that should be loaded by the plugin manager. This effectively serves
@@ -154,7 +155,7 @@ COMMAND_PREFIX_BOTNICK = True
 
 #: A string char, if non-empty, that can be used to invoke a command without requiring the bot's nick.
 #: For example 'helga foo' could be run with '!foo'.
-COMMAND_PREFIX_CHAR = '!'
+COMMAND_PREFIX_CHAR = "!"
 
 #: A boolean that controls the behavior of argument parsing for command plugins. If False,
 #: command plugin arguments are parsed using a naive whitespace split. If True, they will
@@ -192,8 +193,8 @@ def configure(overrides):
         return
 
     # Module import path settings file
-    fromlist = [overrides.split('.')[-1]]
+    fromlist = [overrides.split(".")[-1]]
     overrides = __import__(overrides, this.__dict__, {}, fromlist)
 
-    for attr in filter(lambda x: not x.startswith('_'), dir(overrides)):
+    for attr in filter(lambda x: not x.startswith("_"), dir(overrides)):
         setattr(this, attr, getattr(overrides, attr))

@@ -5,6 +5,7 @@ This document describes the modernization changes made to the Helga chat bot pro
 ## Overview
 
 The modernization effort focuses on:
+
 - Modern Python packaging (PEP 621)
 - Updated CI/CD infrastructure (GitHub Actions)
 - Modern development tools (ruff, black, mypy)
@@ -18,12 +19,14 @@ The modernization effort focuses on:
 **Added:** `pyproject.toml` - Modern Python project configuration following PEP 621
 
 **Benefits:**
+
 - Single source of truth for project metadata
 - Standardized build system configuration
 - Integrated tool configurations (black, ruff, mypy, pytest)
 - Better dependency management with optional extras
 
 **Key Features:**
+
 ```toml
 [project]
 name = "helga"
@@ -37,6 +40,7 @@ docs = [...]  # Documentation tools
 ```
 
 **Migration Notes:**
+
 - `setup.py` is still present for backward compatibility
 - All metadata now lives in `pyproject.toml`
 - Use `pip install -e .[dev]` to install with dev dependencies
@@ -44,6 +48,7 @@ docs = [...]  # Documentation tools
 ### 2. GitHub Actions CI/CD
 
 **Added:**
+
 - `.github/workflows/ci.yml` - Main CI pipeline
 - `.github/workflows/release.yml` - Release automation
 - `.github/dependabot.yml` - Automated dependency updates
@@ -51,6 +56,7 @@ docs = [...]  # Documentation tools
 **Replaced:** Travis CI (`.travis.yml` is now deprecated)
 
 **Features:**
+
 - Multi-version Python testing (3.7-3.13)
 - Parallel job execution
 - MongoDB service integration
@@ -61,6 +67,7 @@ docs = [...]  # Documentation tools
 - Automated releases to PyPI and GitHub Container Registry
 
 **Benefits:**
+
 - Faster CI/CD execution
 - Better integration with GitHub
 - Free for open source projects
@@ -71,6 +78,7 @@ docs = [...]  # Documentation tools
 **Added:** `.pre-commit-config.yaml`
 
 **Hooks Included:**
+
 - **Black** - Code formatting
 - **Ruff** - Fast Python linting (replaces flake8, isort, and more)
 - **Mypy** - Type checking
@@ -79,12 +87,14 @@ docs = [...]  # Documentation tools
 - **General checks** - Trailing whitespace, file endings, YAML/JSON validation
 
 **Setup:**
+
 ```bash
 pip install pre-commit
 pre-commit install
 ```
 
 **Usage:**
+
 ```bash
 # Run on all files
 pre-commit run --all-files
@@ -98,12 +108,14 @@ git commit
 #### Ruff (Replaces flake8, isort, pyupgrade, and more)
 
 **Why Ruff?**
+
 - 10-100x faster than traditional tools
 - Single tool replaces multiple linters
 - Written in Rust for performance
 - Compatible with existing configurations
 
 **Configuration in `pyproject.toml`:**
+
 ```toml
 [tool.ruff]
 line-length = 100
@@ -114,6 +126,7 @@ select = ["E", "W", "F", "I", "B", "C4", "UP", "ARG", "SIM"]
 ```
 
 **Usage:**
+
 ```bash
 # Check code
 ruff check helga
@@ -128,6 +141,7 @@ ruff format helga
 #### Black (Code Formatter)
 
 **Configuration:**
+
 ```toml
 [tool.black]
 line-length = 100
@@ -135,6 +149,7 @@ target-version = ["py37", "py38", "py39", "py310", "py311", "py312"]
 ```
 
 **Usage:**
+
 ```bash
 # Format code
 black helga
@@ -146,6 +161,7 @@ black --check helga
 #### Mypy (Type Checker)
 
 **Configuration:**
+
 ```toml
 [tool.mypy]
 python_version = "3.7"
@@ -154,6 +170,7 @@ ignore_missing_imports = true
 ```
 
 **Usage:**
+
 ```bash
 mypy helga
 ```
@@ -163,6 +180,7 @@ mypy helga
 **Updated:** `Dockerfile` with multi-stage builds
 
 **Improvements:**
+
 - Multi-stage build for smaller images (~50% size reduction)
 - Non-root user for security
 - Health checks
@@ -173,6 +191,7 @@ mypy helga
 **Added:** `.dockerignore` for faster builds
 
 **Updated:** `docker-compose.yml` with:
+
 - Version 3.8 syntax
 - Health checks for all services
 - Named volumes
@@ -181,6 +200,7 @@ mypy helga
 - Better environment variable management
 
 **Usage:**
+
 ```bash
 # Build and run
 docker-compose up --build
@@ -200,6 +220,7 @@ docker-compose down
 **Added:** `requirements-dev.txt`
 
 **Includes:**
+
 - Testing tools (pytest, coverage)
 - Code quality tools (black, ruff, mypy)
 - Build tools (build, twine)
@@ -207,6 +228,7 @@ docker-compose down
 - Security tools (bandit, safety)
 
 **Installation:**
+
 ```bash
 pip install -r requirements-dev.txt
 # OR
@@ -226,22 +248,26 @@ pip install -e .[dev]
 ### For Contributors
 
 1. **Install pre-commit hooks:**
+
    ```bash
    pip install pre-commit
    pre-commit install
    ```
 
 2. **Install development dependencies:**
+
    ```bash
    pip install -e .[dev]
    ```
 
 3. **Run tests:**
+
    ```bash
    pytest
    ```
 
 4. **Check code quality:**
+
    ```bash
    ruff check helga
    black --check helga
@@ -249,6 +275,7 @@ pip install -e .[dev]
    ```
 
 5. **Format code:**
+
    ```bash
    black helga
    ruff check --fix helga
@@ -283,6 +310,7 @@ pip install -e .[dev]
 **No breaking changes** - The bot functionality remains the same.
 
 **Installation:**
+
 ```bash
 # From PyPI (unchanged)
 pip install helga
@@ -295,6 +323,7 @@ pip install -e .[dev]
 ```
 
 **Docker:**
+
 ```bash
 # Pull from GitHub Container Registry (new)
 docker pull ghcr.io/shaunduncan/helga:latest
@@ -321,6 +350,7 @@ docker-compose up --build
 ## Configuration Files Reference
 
 ### New Files
+
 - `pyproject.toml` - Modern Python project configuration
 - `.pre-commit-config.yaml` - Pre-commit hooks configuration
 - `.github/workflows/ci.yml` - CI/CD pipeline
@@ -331,16 +361,19 @@ docker-compose up --build
 - `MODERNIZATION.md` - This file
 
 ### Updated Files
+
 - `Dockerfile` - Multi-stage build, security improvements
 - `docker-compose.yml` - Modern syntax, health checks
 - `setup.py` - Still present for compatibility
 
 ### Deprecated Files
+
 - `.travis.yml` - Replaced by GitHub Actions (can be removed)
 
 ## Best Practices
 
 ### Code Quality
+
 1. Run pre-commit hooks before committing
 2. Keep code formatted with Black
 3. Fix Ruff warnings
@@ -348,6 +381,7 @@ docker-compose up --build
 5. Write tests for new features
 
 ### Development Workflow
+
 1. Create feature branch
 2. Make changes
 3. Run tests locally: `pytest`
@@ -358,6 +392,7 @@ docker-compose up --build
 8. Merge after approval and passing CI
 
 ### Security
+
 1. Review Dependabot PRs promptly
 2. Check security scan results in CI
 3. Keep dependencies updated
@@ -369,6 +404,7 @@ docker-compose up --build
 ### Pre-commit Issues
 
 **Problem:** Pre-commit hooks fail
+
 ```bash
 # Update hooks
 pre-commit autoupdate
@@ -384,6 +420,7 @@ pre-commit install
 ### Docker Build Issues
 
 **Problem:** Build fails or is slow
+
 ```bash
 # Clear build cache
 docker-compose build --no-cache
@@ -395,6 +432,7 @@ docker system prune -a
 ### CI/CD Issues
 
 **Problem:** GitHub Actions fail
+
 - Check workflow logs in GitHub Actions tab
 - Verify Python version compatibility
 - Check MongoDB service health
@@ -403,6 +441,7 @@ docker system prune -a
 ## Future Improvements
 
 Potential future enhancements:
+
 - [ ] Add type hints to all modules
 - [ ] Migrate to Python 3.10+ (drop 3.7-3.9)
 - [ ] Add mutation testing
@@ -425,9 +464,9 @@ Potential future enhancements:
 
 ## Questions or Issues?
 
-- Open an issue on GitHub: https://github.com/shaunduncan/helga/issues
+- Open an issue on GitHub: <https://github.com/shaunduncan/helga/issues>
 - Join #helgabot on Freenode IRC
-- Check documentation: https://helga.readthedocs.org
+- Check documentation: <https://helga.readthedocs.org>
 
 ---
 

@@ -52,9 +52,9 @@ command. It is recommended that you only use this method if you are already fami
     $ docker build -t <image:tag> .
     $ docker run -d [opts] <image:tag> [opts]
 
-The opts you can choose in the run command are standard options for running docker. If you want to use a 
+The opts you can choose in the run command are standard options for running docker. If you want to use a
 settings file that is non-standard, or a persistant datbase, you'll want to use the -v option to mount those
-volumes. Additionally, you may add opts to the helga command after specifying the image you're building. 
+volumes. Additionally, you may add opts to the helga command after specifying the image you're building.
 
 Some gotchas:
 If you're mounting a volume with -v you will need to specify the full path to the directory containing the

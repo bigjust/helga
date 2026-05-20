@@ -7,7 +7,7 @@ from collections import defaultdict
 from helga import settings
 
 
-class BaseClient(object):
+class BaseClient:
     """
     A base client implementation for any arbitrary protocol. Manages keeping track of global
     settings needed for core functionality as well as other general client state.
@@ -42,7 +42,7 @@ class BaseClient(object):
 
     def __init__(self):
         # Pre-configured helga admins
-        self.operators = set(getattr(settings, 'OPERATORS', []))
+        self.operators = set(getattr(settings, "OPERATORS", []))
 
         # Things to keep track of
         self.channels = set()
