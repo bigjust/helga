@@ -5,9 +5,9 @@ services:
     image: inspircd/inspircd-docker:latest
     container_name: helga-irc
     ports:
-    - 6667:6667
+      - 6667:6667
     networks:
-    - helga-network
+      - helga-network
     healthcheck:
       test: [CMD, nc, -z, localhost, '6667']
       interval: 10s
@@ -20,14 +20,14 @@ services:
     container_name: helga-mongo
     platform: linux/amd64
     ports:
-    - 27017:27017
+      - 27017:27017
     volumes:
-    - mongo_data:/data/db
-    - mongo_config:/data/configdb
+      - mongo_data:/data/db
+      - mongo_config:/data/configdb
     environment:
-    - MONGO_INITDB_DATABASE=helga
+      - MONGO_INITDB_DATABASE=helga
     networks:
-    - helga-network
+      - helga-network
     healthcheck:
       test: [CMD, mongosh, --eval, db.adminCommand('ping')]
       interval: 10s

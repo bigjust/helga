@@ -75,7 +75,7 @@ class WebhookPlugin(Command):
     )
 
     def __init__(self, *args, **kwargs):
-        super(Command, self).__init__(*args, **kwargs)
+        Command.__init__(self, *args, **kwargs)
 
         # Per issue 137, these were previously set on signon, but there is a bit of a
         # chicken and egg situation where routes in the same module as commands and matches

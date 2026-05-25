@@ -1,10 +1,10 @@
 language: python
 install:
-- pip install tox
-- pip install coveralls
+  - pip install tox
+  - pip install coveralls
 script: tox
 env:
-- TOXENV=py27
+  - TOXENV=py27
 after_success: coveralls
 services:
-- mongodb
+  - mongodb

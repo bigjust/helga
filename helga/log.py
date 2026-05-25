@@ -101,7 +101,7 @@ class ChannelLogFileHandler(logging.handlers.BaseRotatingHandler):
         filename = os.path.join(basedir, self.current_filename())
         self.next_rollover = self.compute_next_rollover()
         try:
-            super(logging.handlers.BaseRotatingHandler, self).__init__(filename, "a")
+            super().__init__(filename, "a", delay=True)
         except TypeError:  # pragma: no cover Python >= 2.7
             # python 2.6 uses old-style classes for logging.Handler
             logging.handlers.BaseRotatingHandler.__init__(self, filename, "a")

@@ -2,6 +2,7 @@
 Twisted protocol and communication implementations for IRC
 """
 
+import base64
 import contextlib
 import time
 
@@ -147,7 +148,12 @@ class Client(irc.IRCClient, BaseClient):
         if params[1] != "ACK" or params[2].split() != ["sasl"]:
             logger.info("SASL is not available!")
             self.quit("")
-        sasl = (f"{self.username}\0{self.username}\0{self.password}").encode("base64").strip()
+            return
+        sasl = (
+            base64.b64encode(f"{self.username}\0{self.username}\0{self.password}".encode())
+            .decode()
+            .strip()
+        )
         self.sendLine("AUTHENTICATE PLAIN")
         self.sendLine("AUTHENTICATE " + sasl)
 

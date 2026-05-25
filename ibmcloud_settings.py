@@ -14,11 +14,17 @@ vcap_services = os.environ.get("VCAP_SERVICES")
 mongodb_credentials = {}
 
 if vcap_services:
-    services = json.loads(vcap_services)
+    try:
+        services = json.loads(vcap_services)
+    except (json.JSONDecodeError, ValueError):
+        services = {}
     # Look for MongoDB service (could be 'compose-for-mongodb' or 'databases-for-mongodb')
     for service_type in ["compose-for-mongodb", "databases-for-mongodb", "mongodb"]:
         if service_type in services:
-            mongodb_credentials = services[service_type][0]["credentials"]
+            try:
+                mongodb_credentials = services[service_type][0]["credentials"]
+            except (KeyError, IndexError, TypeError):
+                pass
             break
 
 # Bot nickname
