@@ -12,7 +12,7 @@ To use this configuration:
 # Discord server configuration
 SERVER = {
     "TYPE": "discord",
-    "TOKEN": "your_bot_token_here",  # Replace with your actual bot token
+    "TOKEN": "<your bot token>",  # Replace with your actual bot token
 }
 
 # Bot nickname (optional, Discord will use the bot's configured name)
