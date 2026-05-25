@@ -138,6 +138,39 @@ class ClientTestCase(TestCase):
 
     @patch("helga.comm.irc.settings")
     @patch("helga.comm.irc.irc.IRCClient")
+    def test_connectionMade_with_sasl(self, irc, settings):
+        self.client._use_sasl = True
+        with patch.object(self.client, "_reallySendLine") as send:
+            self.client.connectionMade()
+            send.assert_called_with("CAP REQ :sasl")
+            irc.connectionMade.assert_called_with(self.client)
+
+    def test_irc_CAP_sasl_not_available(self):
+        params = ["*", "NAK"]
+        with patch.object(self.client, "quit") as quit:
+            try:
+                self.client.irc_CAP("prefix", params)
+            except LookupError:
+                pass
+            assert quit.called
+
+    def test_irc_903(self):
+        with patch.object(self.client, "sendLine") as send:
+            self.client.irc_903("prefix", params=[])
+            send.assert_called_with("CAP END")
+
+    def test_irc_904(self):
+        with patch.object(self.client, "quit") as quit:
+            self.client.irc_904("prefix", params=["error"])
+            assert quit.called
+
+    def test_irc_905_calls_quit_like_irc_904(self):
+        with patch.object(self.client, "quit") as quit:
+            self.client.irc_905("prefix", params=["error"])
+            assert quit.called
+
+    @patch("helga.comm.irc.settings")
+    @patch("helga.comm.irc.irc.IRCClient")
     def test_connectionLost(self, irc, settings):
         self.client.connectionLost("an error...")
         irc.connectionLost.assert_called_with(self.client, "an error...")
@@ -200,6 +233,36 @@ class ClientTestCase(TestCase):
         user = "helga!helgabot@127.0.0.1"
         self.client.userLeft(user, "#bots")
         signal.emit.assert_called_with("user_left", self.client, "helga", "#bots")
+
+    @patch("helga.comm.irc.irc.IRCClient")
+    def test_msg(self, irc):
+        self.client.msg("#bots", "hello")
+        irc.msg.assert_called_with(self.client, "#bots", "hello")
+
+    @patch("helga.comm.irc.irc.IRCClient")
+    def test_me(self, irc):
+        self.client.me("#bots", "waves")
+        irc.describe.assert_called_with(self.client, "#bots", "waves")
+
+    @patch("helga.comm.irc.irc.IRCClient")
+    def test_join(self, irc):
+        self.client.join("#bots")
+        irc.join.assert_called_with(self.client, "#bots", key=None)
+
+    @patch("helga.comm.irc.irc.IRCClient")
+    def test_leave(self, irc):
+        self.client.leave("#bots", "goodbye")
+        irc.leave.assert_called_with(self.client, "#bots", reason="goodbye")
+
+    @patch("helga.comm.irc.smokesignal")
+    def test_userRenamed(self, signal):
+        self.client.userRenamed("old", "new")
+        signal.emit.assert_called_with("user_rename", self.client, "old", "new")
+
+    @patch("helga.comm.irc.smokesignal")
+    def test_irc_RPL_NAMREPLY(self, signal):
+        self.client.irc_RPL_NAMREPLY("prefix", ["*", "#bots", "=", "@helga user1 user2"])
+        signal.emit.assert_called_with("names_reply", self.client, ["@helga", "user1", "user2"])
 
     @patch("helga.comm.irc.log")
     def test_get_channel_logger_no_existing_logger(self, log):

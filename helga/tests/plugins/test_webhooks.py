@@ -19,6 +19,31 @@ def test_route(reg):
 
 
 @patch("helga.plugins.webhooks.registry")
+def test_route_no_plugin(reg):
+    reg.get_plugin.return_value = None
+
+    def fake_fn():
+        return "foo"
+
+    webhooks.route("/foo", methods=["GET", "POST"])(fake_fn)
+
+
+def test_iter_entry_points_fallback():
+    with patch.object(webhooks, "pkg_resources", None):
+        result = webhooks.iter_entry_points("helga_webhooks")
+        assert result == ()
+
+
+def test_iter_entry_points_uses_pkg_resources():
+    ep = Mock(name="foo")
+    with patch.object(webhooks, "pkg_resources") as pkg_resources:
+        pkg_resources.iter_entry_points.return_value = [ep]
+        result = webhooks.iter_entry_points("helga_webhooks")
+        assert result == [ep]
+        pkg_resources.iter_entry_points.assert_called_with(group="helga_webhooks")
+
+
+@patch("helga.plugins.webhooks.registry")
 def test_route_with_no_methods(reg):
     reg.get_plugin.return_value = reg
 

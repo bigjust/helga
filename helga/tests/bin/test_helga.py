@@ -42,6 +42,22 @@ class TestRun:
             helga.reactor.connectSSL.assert_called_with("localhost", 6667, factory, ssl)
             assert helga.reactor.run.called
 
+    def test_slack(self):
+        server = {"HOST": "localhost", "PORT": 443, "TYPE": "slack"}
+
+        with patch.multiple(
+            helga, smokesignal=Mock(), _get_backend=Mock(), reactor=Mock()
+        ), patch.object(helga.settings, "SERVER", server):
+            factory = Mock()
+            helga._get_backend.return_value = helga._get_backend
+            helga._get_backend.Factory.return_value = factory
+
+            with patch.object(helga, "connectWS") as wss:
+                helga.run()
+                helga.smokesignal.emit.assert_called_with("started")
+                wss.assert_called_with(factory=factory)
+                assert helga.reactor.run.called
+
 
 class TestMain:
     def test_uses_settings_env_var(monkeypatch):

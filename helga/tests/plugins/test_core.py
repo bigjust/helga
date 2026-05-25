@@ -485,6 +485,27 @@ class TestRegistry:
             assert not registry.reload("foo")
             assert not register.called
 
+    @patch("helga.plugins.iter_entry_points")
+    @patch("helga.plugins.sys")
+    @patch("helga.plugins.reload")
+    def test_reload_uses_value_when_no_module_name(self, reloader, sys, iter_entry_points):
+        ep = Mock()
+        ep.name = "foo"
+        ep.module_name = None
+        ep.value = "helga.plugins.ping:ping"
+        ep.load.return_value = "loaded"
+
+        iter_entry_points.return_value = [ep]
+
+        sys.modules = {"helga.plugins.ping": Mock()}
+
+        registry.plugins = ["foo"]
+
+        with patch.object(registry, "register") as register:
+            assert registry.reload("foo")
+            register.assert_called_with("foo", "loaded")
+            assert reloader.called
+
     def test_preprocess(self):
         plugins = [Mock(), Mock(), Mock()]
 
@@ -758,3 +779,26 @@ def test_custom_plugin_priorities(tmpdir):
     assert plugins.PRIORITY_LOW == 1
     assert plugins.PRIORITY_NORMAL == 42
     assert plugins.PRIORITY_HIGH == 9000
+
+
+def test_iter_entry_points_uses_pkg_resources():
+    from helga import plugins as p
+
+    ep = Mock()
+    ep.name = "foo"
+
+    with patch.object(p, "importlib_metadata", None):
+        with patch.object(p, "pkg_resources") as pkg_resources:
+            pkg_resources.iter_entry_points.return_value = [ep]
+            result = p.iter_entry_points("helga_plugins")
+            assert list(result) == [ep]
+            pkg_resources.iter_entry_points.assert_called_with(group="helga_plugins")
+
+
+def test_iter_entry_points_no_backend():
+    from helga import plugins as p
+
+    with patch.object(p, "importlib_metadata", None):
+        with patch.object(p, "pkg_resources", None):
+            result = p.iter_entry_points("helga_plugins")
+            assert result == ()
