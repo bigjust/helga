@@ -7,10 +7,15 @@
 autobahn
 cffi
 decorator
+pyasn1
+pyasn1-modules
 pymongo
 pyOpenSSL
 pystache
+requests
+
+# Additional dependencies required by Twisted
+service-identity
 smokesignal
 Twisted
-requests
 websocket-client

@@ -1,17 +1,16 @@
+import contextlib
 import time
 import uuid
 
+import smokesignal
 from twisted.internet import protocol, reactor, task
+from twisted.words.protocols.jabber import client, jid, xmlstream
 from twisted.words.xish import domish, xpath
 from twisted.words.xish.xmlstream import XmlStreamFactoryMixin
-from twisted.words.protocols.jabber import client, jid, xmlstream
-
-import smokesignal
 
 from helga import log, settings
 from helga.comm.base import BaseClient
 from helga.plugins import registry
-
 
 logger = log.getLogger(__name__)
 
@@ -42,15 +41,18 @@ class Factory(XmlStreamFactoryMixin, protocol.ClientFactory):
         The client instance of :class:`Client`
     """
 
-    protocol = xmlstream.XmlStream
+    protocol = xmlstream.XmlStream  # type: ignore[assignment]
 
     def __init__(self):
-        if 'JID' in settings.SERVER:
-            self.jid = jid.JID(settings.SERVER['JID'])
+        if "JID" in settings.SERVER:
+            self.jid = jid.JID(settings.SERVER["JID"])
         else:
-            self.jid = jid.JID('{user}@{host}'.format(user=settings.SERVER['USERNAME'],
-                                                      host=settings.SERVER['HOST']))
-        self.auth = client.XMPPAuthenticator(self.jid, settings.SERVER['PASSWORD'])
+            self.jid = jid.JID(
+                "{user}@{host}".format(
+                    user=settings.SERVER["USERNAME"], host=settings.SERVER["HOST"]
+                )
+            )
+        self.auth = client.XMPPAuthenticator(self.jid, settings.SERVER["PASSWORD"])
         XmlStreamFactoryMixin.__init__(self, self.auth)
         self.client = Client(factory=self)
 
@@ -64,11 +66,11 @@ class Factory(XmlStreamFactoryMixin, protocol.ClientFactory):
         :param reason: A twisted Failure instance
         :raises: The given reason unless AUTO_RECONNECT is enabled
         """
-        logger.error('Connection to server lost: %s', reason)
+        logger.error("Connection to server lost: %s", reason)
 
         # FIXME: Max retries
-        if getattr(settings, 'AUTO_RECONNECT', True):
-            delay = getattr(settings, 'AUTO_RECONNECT_DELAY', 5)
+        if getattr(settings, "AUTO_RECONNECT", True):
+            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
             reactor.callLater(delay, connector.connect)
         else:
             raise reason
@@ -83,11 +85,11 @@ class Factory(XmlStreamFactoryMixin, protocol.ClientFactory):
         :param reason: A twisted Failure instance
         :raises: The given reason unless AUTO_RECONNECT is enabled
         """
-        logger.warning('Connection to server failed: %s', reason)
+        logger.warning("Connection to server failed: %s", reason)
 
         # FIXME: Max retries
-        if getattr(settings, 'AUTO_RECONNECT', True):
-            delay = getattr(settings, 'AUTO_RECONNECT_DELAY', 5)
+        if getattr(settings, "AUTO_RECONNECT", True):
+            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
             reactor.callLater(delay, connector.connect)
         else:
             reactor.stop()
@@ -129,7 +131,7 @@ class Client(BaseClient):
     """
 
     def __init__(self, factory):
-        super(Client, self).__init__()
+        super().__init__()
 
         self.factory = factory
         self.jid = factory.jid
@@ -137,10 +139,10 @@ class Client(BaseClient):
         self.stream = None
 
         # Used for formatting and checking group chat
-        if 'MUC_HOST' in settings.SERVER:
-            self.conference_host = settings.SERVER['MUC_HOST']
+        if "MUC_HOST" in settings.SERVER:
+            self.conference_host = settings.SERVER["MUC_HOST"]
         else:
-            self.conference_host = 'conference.{host}'.format(host=settings.SERVER['HOST'])
+            self.conference_host = "conference.{host}".format(host=settings.SERVER["HOST"])
 
         # Setup event listeners
         self._bootstrap()
@@ -182,13 +184,13 @@ class Client(BaseClient):
         self.factory.addBootstrap('/presence[@type="subscribe"]', self.on_subscribe)
 
         # Respond to room invites, mediated and direct
-        self.factory.addBootstrap('/message/x', self.on_invite)
+        self.factory.addBootstrap("/message/x", self.on_invite)
 
         # Handle nick collisions
-        self.factory.addBootstrap('/presence/error/conflict', self.on_nick_collision)
+        self.factory.addBootstrap("/presence/error/conflict", self.on_nick_collision)
 
         # Handle server pings, prevents unexpected disconnects
-        self.factory.addBootstrap('/iq/ping', self.on_ping)
+        self.factory.addBootstrap("/iq/ping", self.on_ping)
 
     def _start_heartbeat(self):
         """
@@ -197,16 +199,16 @@ class Client(BaseClient):
         """
         self._stop_heartbeat()
 
-        logger.info('Starting PING heartbeat task')
+        logger.info("Starting PING heartbeat task")
         self._heartbeat = task.LoopingCall(self.ping)
-        self._heartbeat .start(60, now=False)
+        self._heartbeat.start(60, now=False)
 
     def _stop_heartbeat(self):
         """
         Stops the IQ PING heartbeat service if it exists and is running
         """
         if self._heartbeat is not None:
-            logger.info('Stopping PING heartbeat task')
+            logger.info("Stopping PING heartbeat task")
             self._heartbeat.stop()
             self._heartbeat = None
 
@@ -214,15 +216,18 @@ class Client(BaseClient):
         """
         Sends an IQ PING to the host server. Useful for establishing a heartbeat/keepalive
         """
-        logger.debug('Sending PING to %s', settings.SERVER['HOST'])
+        logger.debug("Sending PING to %s", settings.SERVER["HOST"])
 
-        ping = domish.Element(('', 'iq'), attribs={
-            'id': str(uuid.uuid4()),
-            'from': self.jid.full(),
-            'to': settings.SERVER['HOST'],
-            'type': 'get',
-        })
-        ping.addElement('ping', 'urn:xmpp:ping')
+        ping = domish.Element(
+            ("", "iq"),
+            attribs={
+                "id": str(uuid.uuid4()),
+                "from": self.jid.full(),
+                "to": settings.SERVER["HOST"],
+                "type": "get",
+            },
+        )
+        ping.addElement("ping", "urn:xmpp:ping")
         self.stream.send(ping)
 
     def on_ping(self, el):
@@ -231,13 +236,16 @@ class Client(BaseClient):
 
         :param el: A <iq/> PING message, instance of `twisted.words.xish.domish.Element`
         """
-        logger.debug('Received PING from %s', el['from'])
-        pong = domish.Element(('', 'iq'), attribs={
-            'id': el['id'],
-            'to': el['from'],
-            'from': el['to'],
-            'type': 'result',
-        })
+        logger.debug("Received PING from %s", el["from"])
+        pong = domish.Element(
+            ("", "iq"),
+            attribs={
+                "id": el["id"],
+                "to": el["from"],
+                "from": el["to"],
+                "type": "result",
+            },
+        )
         self.stream.send(pong)
 
     def on_connect(self, stream):
@@ -247,7 +255,7 @@ class Client(BaseClient):
 
         :param stream: An instance of `twisted.words.protocols.jabber.xmlstream.XmlStream`
         """
-        logger.info('Connection made to %s', settings.SERVER['HOST'])
+        logger.info("Connection made to %s", settings.SERVER["HOST"])
         self.stream = stream
         self._start_heartbeat()
 
@@ -257,7 +265,7 @@ class Client(BaseClient):
 
         :param stream: An instance of `twisted.words.protocols.jabber.xmlstream.XmlStream`
         """
-        logger.info('Disconnected from %s', settings.SERVER['HOST'])
+        logger.info("Disconnected from %s", settings.SERVER["HOST"])
         self._stop_heartbeat()
 
     def set_presence(self, presence):
@@ -266,8 +274,8 @@ class Client(BaseClient):
 
         :param presence: The presence status string to send to the server
         """
-        el = domish.Element((None, 'presence'))
-        el.addElement('status', content=presence)
+        el = domish.Element((None, "presence"))
+        el.addElement("status", content=presence)
         self.stream.send(el)
 
     def on_authenticated(self, stream):
@@ -278,7 +286,7 @@ class Client(BaseClient):
         :param stream: An instance of `twisted.words.protocols.jabber.xmlstream.XmlStream`
         """
         # Make presence online
-        self.set_presence('Online')
+        self.set_presence("Online")
 
         for channel in settings.CHANNELS:
             if isinstance(channel, tuple):
@@ -286,7 +294,7 @@ class Client(BaseClient):
             else:
                 self.join(channel)
 
-        smokesignal.emit('signon', self)
+        smokesignal.emit("signon", self)
 
     def on_init_failed(self, failure):
         """
@@ -295,7 +303,7 @@ class Client(BaseClient):
 
         :param failure: The element of the failure
         """
-        logger.error('Initialization failed: %s', failure)
+        logger.error("Initialization failed: %s", failure)
         self.stream.sendFooter()
 
     def get_channel_logger(self, channel):
@@ -322,7 +330,7 @@ class Client(BaseClient):
         if not settings.CHANNEL_LOGGING:
             return
         chan_logger = self.get_channel_logger(channel)
-        chan_logger.info(message, extra={'nick': nick})
+        chan_logger.info(message, extra={"nick": nick})
 
     def joined(self, channel):
         """
@@ -331,9 +339,9 @@ class Client(BaseClient):
 
         :param channel: the channel that has been joined
         """
-        logger.info('Joined %s', channel)
+        logger.info("Joined %s", channel)
         self.channels.add(channel)
-        smokesignal.emit('join', self, channel)
+        smokesignal.emit("join", self, channel)
 
     def left(self, channel):
         """
@@ -342,9 +350,9 @@ class Client(BaseClient):
 
         :param channel: the channel that has been left
         """
-        logger.info('Left %s', channel)
+        logger.info("Left %s", channel)
         self.channels.discard(channel)
-        smokesignal.emit('left', self, channel)
+        smokesignal.emit("left", self, channel)
 
     def parse_nick(self, message):
         """
@@ -355,7 +363,7 @@ class Client(BaseClient):
         :param message: A <message/> element, instance of `twisted.words.xish.domish.Element`
         :returns: The nick portion of the XMPP jid
         """
-        from_jid = jid.JID(message['from'])
+        from_jid = jid.JID(message["from"])
 
         if from_jid.host == self.conference_host:
             return from_jid.resource
@@ -376,15 +384,15 @@ class Client(BaseClient):
         :param element: An instance of `twisted.words.xish.domish.Element`
         :returns: The channel portion of the XMPP jid, prefixed with '#' if it's a chat room
         """
-        from_jid = jid.JID(element['from'])
+        from_jid = jid.JID(element["from"])
 
         try:
-            element_type = element['type']
+            element_type = element["type"]
         except KeyError:
-            element_type = ''
+            element_type = ""
 
-        if element_type.lower() == 'groupchat' or element.name == 'presence':
-            return '#{0}'.format(from_jid.user)
+        if element_type.lower() == "groupchat" or element.name == "presence":
+            return f"#{from_jid.user}"
         elif from_jid.host == self.conference_host:
             return from_jid.resource
         else:
@@ -398,14 +406,14 @@ class Client(BaseClient):
         :param message: A <message/> element, instance of `twisted.words.xish.domish.Element`
         :returns: The contents of the message, empty string if the message is delayed
         """
-        if xpath.matches('/message/delay', message):
-            return u''
+        if xpath.matches("/message/delay", message):
+            return ""
 
         # This is a hack around a unicode bug in twisted queryForString
-        strings = xpath.queryForStringList('/message/body', message)
+        strings = xpath.queryForStringList("/message/body", message)
         if strings:
             return strings[0]
-        return u''
+        return ""
 
     def is_public_channel(self, channel):
         """
@@ -413,7 +421,7 @@ class Client(BaseClient):
 
         :param channel: the channel name to check
         """
-        return channel.startswith('#')
+        return channel.startswith("#")
 
     def on_message(self, element):
         """
@@ -436,7 +444,7 @@ class Client(BaseClient):
             return
 
         # Log the incoming message and notify message subscribers
-        logger.debug('[<--] %s/%s - %s', channel, nick, message)
+        logger.debug("[<--] %s/%s - %s", channel, nick, message)
         is_public = self.is_public_channel(channel)
 
         # When we get a priv msg, the channel is our current nick, so we need to
@@ -448,16 +456,14 @@ class Client(BaseClient):
             channel = nick
 
         # Some things should go first
-        try:
+        with contextlib.suppress(TypeError, ValueError):
             channel, nick, message = registry.preprocess(self, channel, nick, message)
-        except (TypeError, ValueError):
-            pass
 
         # if not message.has_response:
         responses = registry.process(self, channel, nick, message)
 
         if responses:
-            message = u'\n'.join(responses)
+            message = "\n".join(responses)
             self.msg(channel, message)
 
             if is_public:
@@ -475,25 +481,28 @@ class Client(BaseClient):
                         will be sent as a private message to a user with that nick.
         :param message: The message to send
         """
-        logger.debug('[-->] %s - %s', channel, message)
+        logger.debug("[-->] %s - %s", channel, message)
         is_public = self.is_public_channel(channel)
 
         if is_public:
             resp_host = self.conference_host
-            resp_type = 'groupchat'
+            resp_type = "groupchat"
         else:
             resp_host = self.jid.host
-            resp_type = 'chat'
+            resp_type = "chat"
 
-        resp_channel = '{user}@{host}'.format(user=channel, host=resp_host).lstrip('#')
+        resp_channel = f"{channel}@{resp_host}".lstrip("#")
 
         # Create the response <message/> element
-        element = domish.Element(('jabber:client', 'message'), attribs={
-            'to': resp_channel,
-            'from': self.jid.full(),
-            'type': resp_type,
-        })
-        element.addElement('body', content=message)
+        element = domish.Element(
+            ("jabber:client", "message"),
+            attribs={
+                "to": resp_channel,
+                "from": self.jid.full(),
+                "type": resp_type,
+            },
+        )
+        element.addElement("body", content=message)
 
         self.stream.send(element)
 
@@ -507,7 +516,7 @@ class Client(BaseClient):
                         will be sent as a private message to a user with that nick.
         :param message: The message to send, which will be prefixed with '/me'
         """
-        self.msg(channel, '/me {0}'.format(message))
+        self.msg(channel, f"/me {message}")
 
     def on_nick_collision(self, element):
         """
@@ -517,14 +526,14 @@ class Client(BaseClient):
 
         :param element: A <presence/> element, instance of `twisted.words.xish.domish.Element`
         """
-        channel = jid.JID(element['from']).userhost()
+        channel = jid.JID(element["from"]).userhost()
 
-        parts = self.nickname.split('_')
+        parts = self.nickname.split("_")
         if len(parts) > 1:
             parts.pop()
 
-        base = '_'.join(parts)
-        self.nickname = '{0}_{1}'.format(base, int(time.time()))
+        base = "_".join(parts)
+        self.nickname = f"{base}_{int(time.time())}"
 
         # FIXME: Is this broken? What about the password?
         # See http://xmpp.org/extensions/xep-0045.html#enter-conflict
@@ -537,14 +546,14 @@ class Client(BaseClient):
 
         :param element: A <message/> element, instance of `twisted.words.xish.domish.Element`
         """
-        channel = ''
-        password = ''
+        channel = ""
+        password = ""
 
         # NOTE: check for either http://xmpp.org/extensions/xep-0045.html#invite
         # or direct invites http://xmpp.org/extensions/xep-0249.html
-        if xpath.matches('/message/x/invite', element):
-            from_jid = jid.JID(element['from'])
-            to_jid = jid.JID(element['to'])
+        if xpath.matches("/message/x/invite", element):
+            from_jid = jid.JID(element["from"])
+            to_jid = jid.JID(element["to"])
 
             if from_jid.host == self.conference_host:
                 channel = from_jid.userhost()
@@ -552,14 +561,14 @@ class Client(BaseClient):
                 channel = to_jid.userhost()
 
             # This is a hack around a unicode bug in twisted queryForString
-            strings = xpath.queryForStringList('/message/x/password', element)
+            strings = xpath.queryForStringList("/message/x/password", element)
             if strings:
                 password = strings[0]
         elif xpath.matches('/message/x[@xmlns="jabber:x:conference"]', element):
             # Direct invite
-            x = xpath.queryForNodes('/message/x', element)[0]
-            channel = x['jid']
-            password = x.attributes.get('password', '')
+            x = xpath.queryForNodes("/message/x", element)[0]
+            channel = x["jid"]
+            password = x.attributes.get("password", "")
         else:
             # Probably not an invite, but the overly greedy xpath matched it. Ignore.
             return
@@ -573,11 +582,14 @@ class Client(BaseClient):
 
         :param element: A <presence/> element, instance of `twisted.words.xish.domish.Element`
         """
-        message = domish.Element(('jabber:client', 'presence'), attribs={
-            'to': element['from'],
-            'from': self.jid.full(),
-            'type': 'subscribed',
-        })
+        message = domish.Element(
+            ("jabber:client", "presence"),
+            attribs={
+                "to": element["from"],
+                "from": self.jid.full(),
+                "type": "subscribed",
+            },
+        )
         self.stream.send(message)
 
     def on_user_joined(self, element):
@@ -592,8 +604,8 @@ class Client(BaseClient):
         # or maybe more generally /presence/x/name
         nick = self.parse_nick(element)
         channel = self.parse_channel(element)
-        logger.debug('User %s joined channel %s', nick, channel)
-        smokesignal.emit('user_joined', self, nick, channel)
+        logger.debug("User %s joined channel %s", nick, channel)
+        smokesignal.emit("user_joined", self, nick, channel)
 
     def on_user_left(self, element):
         """
@@ -604,8 +616,8 @@ class Client(BaseClient):
         """
         nick = self.parse_nick(element)
         channel = self.parse_channel(element)
-        logger.debug('User %s left channel %s', nick, channel)
-        smokesignal.emit('user_left', self, nick, channel)
+        logger.debug("User %s left channel %s", nick, channel)
+        smokesignal.emit("user_left", self, nick, channel)
 
     def join(self, channel, password=None):
         """
@@ -619,22 +631,28 @@ class Client(BaseClient):
         channel = self.format_channel(channel)
         logger.info("Joining channel %s", channel)
 
-        element = domish.Element(('jabber:client', 'presence'), attribs={
-            'to': '{channel}/{nick}'.format(channel=channel, nick=self.nickname),
-            'from': self.jid.full(),
-        })
+        element = domish.Element(
+            ("jabber:client", "presence"),
+            attribs={
+                "to": f"{channel}/{self.nickname}",
+                "from": self.jid.full(),
+            },
+        )
 
-        muc = domish.Element(('http://jabber.org/protocol/muc', 'x'))
+        muc = domish.Element(("http://jabber.org/protocol/muc", "x"))
 
         # Don't include room history
-        hist = domish.Element(('', 'history'), attribs={
-            'maxchars': '0',
-            'maxstanzas': '0',
-        })
+        hist = domish.Element(
+            ("", "history"),
+            attribs={
+                "maxchars": "0",
+                "maxstanzas": "0",
+            },
+        )
         muc.addChild(hist)
 
         if password:
-            muc.addElement('password', content=password)
+            muc.addElement("password", content=password)
 
         element.addChild(muc)
 
@@ -649,11 +667,14 @@ class Client(BaseClient):
         :param reason: an optional reason for leaving
         """
         logger.info("Leaving channel %s: %s", channel, reason)
-        element = domish.Element(('jabber:client', 'presence'), attribs={
-            'to': self.format_channel(channel),
-            'from': self.jid.full(),
-            'type': 'unavailable',
-        })
+        element = domish.Element(
+            ("jabber:client", "presence"),
+            attribs={
+                "to": self.format_channel(channel),
+                "from": self.jid.full(),
+                "type": "unavailable",
+            },
+        )
         self.stream.send(element)
         self.left(channel)
 
@@ -677,9 +698,8 @@ class Client(BaseClient):
                         or full room JID.
         :returns: The full user@host JID of the room
         """
-        channel = channel.lstrip('#')
-        fallback = '{channel}@{host}'.format(channel=channel,
-                                             host=self.conference_host)
+        channel = channel.lstrip("#")
+        fallback = f"{channel}@{self.conference_host}"
 
         try:
             channel_jid = jid.JID(channel)
@@ -687,7 +707,7 @@ class Client(BaseClient):
             return fallback
         else:
             if not all((channel_jid.user, channel_jid.host)):
-                logger.warning('Parsed channel jid %s is invalid', channel_jid.full())
+                logger.warning("Parsed channel jid %s is invalid", channel_jid.full())
                 return fallback
             else:
                 return channel_jid.userhost()

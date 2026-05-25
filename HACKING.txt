@@ -1,0 +1,250 @@
+Helga Hacking Guide
+===================
+
+This repository includes a docker-compose setup for local development with:
+
+- an IRC server
+- MongoDB
+- a Helga bot container
+
+Start Helga with Docker Compose
+-------------------------------
+
+From the repository root:
+
+    docker compose up --build
+
+To run in the background:
+
+    docker compose up -d --build
+
+To rebuild from scratch when dependencies or packaging change:
+
+    docker compose build --no-cache helga
+    docker compose up -d --force-recreate helga
+
+View logs:
+
+    docker compose logs -f helga
+
+Stop everything:
+
+    docker compose down
+
+The included compose file starts:
+- IRC on localhost:6667
+- MongoDB on localhost:27017
+
+The default Docker settings file is:
+
+    /etc/helga_settings.py
+
+That file is copied from:
+
+    settings_docker.py
+
+Open a shell in the Helga container
+-----------------------------------
+
+If the container is running:
+
+    docker compose exec helga sh
+
+If you need a one-off shell:
+
+    docker compose run --rm helga sh
+
+Useful checks inside the container:
+
+Show the configured settings file behavior:
+
+    python -c "from helga import settings; settings.configure('/etc/helga_settings.py'); print(settings.SERVER); print(settings.ENABLED_PLUGINS)"
+
+Show discovered plugin entry points:
+
+    python -c "from importlib import metadata as m; print([ep.name for ep in m.entry_points(group='helga_plugins')])"
+
+Show webhook entry points:
+
+    python -c "from importlib import metadata as m; print([ep.name for ep in m.entry_points(group='helga_webhooks')])"
+
+Start Helga manually inside the container
+-----------------------------------------
+
+The container entrypoint already runs Helga, but for manual testing you can run:
+
+    helga --settings=/etc/helga_settings.py
+
+Or with the environment variable:
+
+    export HELGA_SETTINGS=/etc/helga_settings.py
+    helga
+
+Connect to the local IRC server
+-------------------------------
+
+The compose stack exposes IRC on localhost:6667.
+
+You can connect with an IRC client and join the development channel configured in
+`settings_docker.py`:
+
+    #helga-dev
+
+Depending on your IRC client, connect to:
+
+- host: localhost
+- port: 6667
+- ssl: no
+
+How plugins are loaded
+----------------------
+
+Helga loads plugins from Python package entry points in the `helga_plugins` group.
+
+Built-in plugins are declared in this repository's `setup.py`. Third-party plugins
+must also be installed as Python packages and expose a `helga_plugins` entry point.
+
+At startup, Helga:
+
+1. loads settings
+2. discovers installed entry points
+3. applies `ENABLED_PLUGINS` / `DISABLED_PLUGINS`
+4. enables plugins on channels using `DEFAULT_CHANNEL_PLUGINS`
+
+Add an existing plugin
+----------------------
+
+If a plugin is already published as a package, add it to `requirements.txt`.
+
+Example:
+
+    helga-flip
+
+Then rebuild the Helga image:
+
+    docker compose build --no-cache helga
+    docker compose up -d --force-recreate helga
+
+Verify plugin discovery:
+
+    docker compose exec helga python -c "from importlib import metadata as m; print([ep.name for ep in m.entry_points(group='helga_plugins')])"
+
+If the plugin is installed but not enabled by default, update your settings file to include it in:
+
+- `ENABLED_PLUGINS`
+- `DEFAULT_CHANNEL_PLUGINS`
+
+For the Docker setup, edit:
+
+    settings_docker.py
+
+Then rebuild/restart the container.
+
+Add a local plugin under development
+------------------------------------
+
+There are two common approaches.
+
+1. Add the plugin as an installable dependency
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If your plugin lives in another repository, install it into the image during build.
+
+Examples:
+
+- add it to `requirements.txt` if available from PyPI
+- or install from a git URL
+- or copy it into the image and `pip install` it
+
+After that, rebuild the image:
+
+    docker compose build --no-cache helga
+    docker compose up -d --force-recreate helga
+
+2. Develop the plugin interactively in the container
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Open a shell:
+
+    docker compose exec helga sh
+
+Install the plugin in editable/development mode if its source is available:
+
+    pip install -e /path/to/plugin
+
+Then restart Helga.
+
+Writing a new plugin
+--------------------
+
+A simple command plugin looks like this:
+
+    from helga.plugins import command
+
+    @command('hello', help='Say hello')
+    def hello(client, channel, nick, message, cmd, args):
+        return 'hello, {0}'.format(nick)
+
+A simple match plugin looks like this:
+
+    from helga.plugins import match
+
+    @match(r'hello')
+    def hello_match(client, channel, nick, message, matches):
+        return 'I saw hello'
+
+Package it with a `setup.py` entry point like:
+
+    entry_points={
+        'helga_plugins': [
+            'hello = my_plugin:hello',
+        ],
+    }
+
+Important: Helga discovers plugins through installed package metadata, not by scanning
+a directory of loose Python files.
+
+Minimal plugin workflow
+-----------------------
+
+1. create plugin source
+2. package it with a `helga_plugins` entry point
+3. install it into the same Python environment as Helga
+4. rebuild/restart Helga
+5. verify entry point discovery
+6. enable it in settings if needed
+
+Troubleshooting
+---------------
+
+If you see:
+
+    Plugin whitelist was empty, none, or false. Skipping.
+
+check these things:
+
+1. settings are actually loaded:
+
+    docker compose exec helga python -c "from helga import settings; settings.configure('/etc/helga_settings.py'); print(settings.ENABLED_PLUGINS)"
+
+2. plugin entry points are visible:
+
+    docker compose exec helga python -c "from importlib import metadata as m; print([ep.name for ep in m.entry_points(group='helga_plugins')])"
+
+3. the container was rebuilt after dependency changes:
+
+    docker compose build --no-cache helga
+    docker compose up -d --force-recreate helga
+
+4. the plugin is included in `ENABLED_PLUGINS` and/or `DEFAULT_CHANNEL_PLUGINS` if you are using explicit lists
+
+Relevant files
+--------------
+
+- `docker-compose.yml` - local dev stack
+- `Dockerfile` - Helga image build
+- `settings_docker.py` - Docker-specific settings
+- `setup.py` - built-in plugin entry points
+- `helga/plugins/__init__.py` - plugin registry and loader
+- `docs/source/plugins.rst` - plugin authoring details
+- `docs/source/configuring_helga.rst` - settings documentation

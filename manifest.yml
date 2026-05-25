@@ -1,0 +1,17 @@
+applications:
+- name: helga-bot
+  memory: 512M
+  instances: 1
+  buildpacks:
+  - python_buildpack
+  command: helga --settings=/home/vcap/app/ibmcloud_settings.py
+  services:
+  - helga-mongodb
+  env:
+    PYTHONUNBUFFERED: true
+    HELGA_NICK: helga
+    HELGA_LOG_LEVEL: INFO
+  health-check-type: process
+  timeout: 180
+
+# Made with Bob

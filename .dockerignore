@@ -1,0 +1,84 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# CI/CD
+.github
+.travis.yml
+.coveragerc
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info
+dist
+build
+eggs
+.eggs
+lib
+lib64
+parts
+sdist
+var
+wheels
+*.egg
+MANIFEST
+
+# Virtual environments
+venv
+env
+ENV
+.venv
+
+# Testing
+.tox
+.pytest_cache
+.coverage
+htmlcov
+.hypothesis
+*.cover
+.cache
+nosetests.xml
+coverage.xml
+*.log
+
+# IDEs
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+docs/build
+docs/_build
+
+# Development
+*.md
+!README.md
+LICENSE*
+CHANGELOG.rst
+HACKING.txt
+Vagrantfile
+
+# IBM Cloud specific (not needed in generic Docker)
+.cfignore
+deploy-ibmcloud.sh
+IBM_CLOUD_DEPLOYMENT.md
+IBMCLOUD_QUICKSTART.md
+ibmcloud_settings.py
+manifest.yml
+Procfile
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Pre-commit
+.pre-commit-config.yaml

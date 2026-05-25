@@ -16,7 +16,7 @@ chatnets = {
   };
 };
 
-channels = ( 
+channels = (
   { name = "#bots"; chatnet = "vagrant"; autojoin = "yes"; }
 );
 

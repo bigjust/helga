@@ -1,6 +1,5 @@
 import os
 import re
-
 from collections import deque
 from operator import methodcaller
 
@@ -10,18 +9,18 @@ from helga import settings
 from helga.plugins.webhooks import HttpError, route
 
 
-class Index(object):
+class Index:
     """
     Rendered object for the logger index page meant to show the full list
     of logged channels.
     """
 
     def title(self):
-        return u'Channel Logs'
+        return "Channel Logs"
 
     def channels(self):
         log_dir = settings.CHANNEL_LOGGING_DIR
-        lstrip = methodcaller('lstrip', '#')
+        lstrip = methodcaller("lstrip", "#")
         hidden = set(map(lstrip, settings.CHANNEL_LOGGING_HIDE_CHANNELS))
 
         if not os.path.isdir(log_dir):
@@ -33,7 +32,7 @@ class Index(object):
             yield chan
 
 
-class ChannelIndex(object):
+class ChannelIndex:
     """
     Rendered object for the logger channel index page meant to show the full list
     of log files (UTC dates) for a given IRC channel.
@@ -43,20 +42,20 @@ class ChannelIndex(object):
         self.channel = channel
 
     def title(self):
-        return u'#{0} Channel Logs'.format(self.channel)
+        return f"#{self.channel} Channel Logs"
 
     def dates(self):
-        channel = '#{0}'.format(self.channel)
+        channel = f"#{self.channel}"
         basedir = os.path.join(settings.CHANNEL_LOGGING_DIR, channel)
 
         if not os.path.isdir(basedir):
             raise HttpError(404)
 
         for date in sorted(os.listdir(basedir), reverse=True):
-            yield date.replace('.txt', '')
+            yield date.replace(".txt", "")
 
 
-class ChannelLog(object):
+class ChannelLog:
     """
     Rendered object for displaying the full contents of a channel log for a
     given channel and date.
@@ -65,8 +64,8 @@ class ChannelLog(object):
     def __init__(self, channel, date):
         self.channel_name = channel
         self.date = date
-        self.logfile = '{0}.txt'.format(self.date)
-        self.channel = '#{0}'.format(self.channel_name)
+        self.logfile = f"{self.date}.txt"
+        self.channel = f"#{self.channel_name}"
 
     @property
     def logfile_path(self):
@@ -76,7 +75,7 @@ class ChannelLog(object):
         """
         The page title
         """
-        return u'{0} Channel Logs for {1}'.format(self.channel, self.date)
+        return f"{self.channel} Channel Logs for {self.date}"
 
     def messages(self):
         """
@@ -86,36 +85,40 @@ class ChannelLog(object):
         if not os.path.isfile(self.logfile_path):
             raise HttpError(404)
 
-        line_pat = re.compile(r'^(\d{2}:?){3} - \w+ - .*$')
-        message = u''
+        line_pat = re.compile(r"^(\d{2}:?){3} - \w+ - .*$")
+        message = ""
         log = deque()
 
         # XXX: This is kind of terrible. Some things will log only a single time
         # if the message sent over IRC has newlines. So we have to read in reverse
         # and construct the response list
-        with open(self.logfile_path, 'r') as fp:
+        with open(self.logfile_path) as fp:
             for line in reversed(fp.readlines()):
                 if not line_pat.match(line):
-                    message = u''.join((line, message))
+                    message = "".join((line, message))
                     continue
 
-                parts = line.strip().split(u' - ')
+                parts = line.strip().split(" - ")
                 time = parts.pop(0)
                 nick = parts.pop(0)
-                message = u'\n'.join((u' - '.join(parts), message))
-                log.appendleft({
-                    'time': time,
-                    'nick': nick,
-                    'message': message.rstrip(u'\n'),
-                })
-                message = ''
+                message = "\n".join((" - ".join(parts), message))
+                log.appendleft(
+                    {
+                        "time": time,
+                        "nick": nick,
+                        "message": message.rstrip("\n"),
+                    }
+                )
+                message = ""
 
         if message:
-            log.appendleft({
-                'time': '',
-                'nick': '',
-                'message': message,
-            })
+            log.appendleft(
+                {
+                    "time": "",
+                    "nick": "",
+                    "message": message,
+                }
+            )
 
         return log
 
@@ -123,24 +126,21 @@ class ChannelLog(object):
         """
         Offers this logfile as a download
         """
-        request.setHeader('Content-Type', 'text/plain')
-        request.setHeader('Content-Disposition',
-                          'attachment; filename={0}'.format(self.logfile))
-        with open(self.logfile_path, 'r') as fp:
-            return '\n'.join(line.strip() for line in fp.readlines())
+        request.setHeader("Content-Type", "text/plain")
+        request.setHeader("Content-Disposition", f"attachment; filename={self.logfile}")
+        with open(self.logfile_path) as fp:
+            return "\n".join(line.strip() for line in fp.readlines())
 
 
-@route(r'/logger/?$')
-@route(r'/logger/(?P<channel>[\w\-_]+)/?$')
-@route(r'/logger/(?P<channel>[\w\-_]+)/(?P<date>[\w\-]+)(?P<as_text>\.txt)?/?$')
+@route(r"/logger/?$")
+@route(r"/logger/(?P<channel>[\w\-_]+)/?$")
+@route(r"/logger/(?P<channel>[\w\-_]+)/(?P<date>[\w\-]+)(?P<as_text>\.txt)?/?$")
 def logger(request, irc_client, channel=None, date=None, as_text=None):
     if not settings.CHANNEL_LOGGING:
-        raise HttpError(501, 'Channel logging is not enabled')
+        raise HttpError(501, "Channel logging is not enabled")
 
-    request.setHeader('Content-Type', 'text/html')
-    renderer = pystache.renderer.Renderer(
-        search_dirs=os.path.dirname(os.path.abspath(__file__))
-    )
+    request.setHeader("Content-Type", "text/html")
+    renderer = pystache.renderer.Renderer(search_dirs=os.path.dirname(os.path.abspath(__file__)))
 
     if channel is None:
         page = Index()

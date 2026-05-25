@@ -2,32 +2,30 @@
 Helga's core plugin library containing base implementations for creating plugins
 as well as utilities for managing plugins at runtime
 """
-from __future__ import absolute_import
+
 from importlib import reload
 
 try:
     from importlib import metadata as importlib_metadata
 except ImportError:  # pragma: no cover
-    importlib_metadata = None
+    importlib_metadata = None  # type: ignore[assignment]
 
 try:
     import pkg_resources
 except ImportError:  # pragma: no cover
-    pkg_resources = None
+    pkg_resources = None  # type: ignore[assignment]
 import functools
 import random
 import re
 import shlex
 import sys
 import warnings
-
 from collections import defaultdict
 from operator import methodcaller
 
 import smokesignal
 
 from helga import log, settings
-
 
 logger = log.getLogger(__name__)
 
@@ -52,16 +50,16 @@ def iter_entry_points(group):
 
 #: A collection of pre-canned acknowledgement type responses
 ACKS = [
-    'roger',
-    '10-4',
-    'no problem',
-    'will do',
-    'you got it',
-    'anything you say',
-    'sure thing',
-    'ok',
-    'right-o',
-    'consider it done',
+    "roger",
+    "10-4",
+    "no problem",
+    "will do",
+    "you got it",
+    "anything you say",
+    "sure thing",
+    "ok",
+    "right-o",
+    "consider it done",
 ]
 
 
@@ -79,7 +77,9 @@ PRIORITY_HIGH = settings.PLUGIN_PRIORITY_HIGH
 
 
 if not settings.COMMAND_ARGS_SHLEX:
-    warnings.warn(u'Command arg parsing will default to shlex in a future version', FutureWarning)
+    warnings.warn(
+        "Command arg parsing will default to shlex in a future version", FutureWarning, stacklevel=2
+    )
 
 
 def random_ack():
@@ -100,7 +100,7 @@ class ResponseNotReady(Exception):
     """
 
 
-class Registry(object):
+class Registry:
     """
     Simple plugin registry that handles dispatching messages to registered plugins.
     Plugins can be disabled or enabled per channel. By default, all plugins are loaded, but not
@@ -119,6 +119,7 @@ class Registry(object):
 
         A dictionary of enabled plugin names per channel, keyed by channel name
     """
+
     __instance = None
 
     def __new__(cls, *args, **kwargs):
@@ -128,30 +129,30 @@ class Registry(object):
         loses the connection to the server
         """
         if cls.__instance is None:
-            cls.__instance = super(Registry, cls).__new__(cls, *args, **kwargs)
+            cls.__instance = super().__new__(cls, *args, **kwargs)
         return cls.__instance
 
     def __init__(self):
-        if not hasattr(self, 'plugins'):
+        if not hasattr(self, "plugins"):
             self.plugins = {}
 
-        self.plugin_names = set(ep.name for ep in iter_entry_points('helga_plugins'))
+        self.plugin_names = {ep.name for ep in iter_entry_points("helga_plugins")}
 
         # Plugins whitelist/blacklist
-        self.whitelist_plugins = self._create_plugin_list('ENABLED_PLUGINS', default=True)
-        self.blacklist_plugins = self._create_plugin_list('DISABLED_PLUGINS', default=set())
+        self.whitelist_plugins = self._create_plugin_list("ENABLED_PLUGINS", default=True)
+        self.blacklist_plugins = self._create_plugin_list("DISABLED_PLUGINS", default=set())
 
         # Figure out default channel plugins using the whitelist and blacklist
-        default = self._create_plugin_list('DEFAULT_CHANNEL_PLUGINS', default=set())
+        default = self._create_plugin_list("DEFAULT_CHANNEL_PLUGINS", default=set())
 
         # Make sure to exclude extras
         self.default_channel_plugins = (default & self.whitelist_plugins) - self.blacklist_plugins
 
-        if not hasattr(self, 'enabled_plugins'):
+        if not hasattr(self, "enabled_plugins"):
             # Enabled plugins is a dict: channel -> set()
             self.enabled_plugins = defaultdict(lambda: self.default_channel_plugins)
 
-        smokesignal.on('started', self.load)
+        smokesignal.on("started", self.load)
 
     def _create_plugin_list(self, setting_name, default):
         """
@@ -182,8 +183,8 @@ class Registry(object):
         except TypeError:
             pass
 
-        if not (isinstance(fn_or_cls, Plugin) or hasattr(fn_or_cls, '_plugins')):
-            raise TypeError(u"Plugin {0} must be a subclass of Plugin, or a decorated function".format(name))
+        if not (isinstance(fn_or_cls, Plugin) or hasattr(fn_or_cls, "_plugins")):
+            raise TypeError(f"Plugin {name} must be a subclass of Plugin, or a decorated function")
 
         self.plugins[name] = fn_or_cls
 
@@ -239,26 +240,26 @@ class Registry(object):
         it is not loaded.
         """
         if not self.whitelist_plugins:
-            logger.warning('Plugin whitelist was empty, none, or false. Skipping.')
-            smokesignal.emit('plugins_loaded')
+            logger.warning("Plugin whitelist was empty, none, or false. Skipping.")
+            smokesignal.emit("plugins_loaded")
             return
 
-        for entry_point in iter_entry_points('helga_plugins'):
+        for entry_point in iter_entry_points("helga_plugins"):
             if entry_point.name in self.blacklist_plugins:
-                logger.info('Skipping blacklisted plugin %s', entry_point.name)
+                logger.info("Skipping blacklisted plugin %s", entry_point.name)
                 continue
 
             if entry_point.name not in self.whitelist_plugins:
-                logger.info('Skipping non-whitelisted plugin %s', entry_point.name)
+                logger.info("Skipping non-whitelisted plugin %s", entry_point.name)
                 continue
 
             try:
-                logger.info('Loading and registering plugin %s', entry_point.name)
+                logger.info("Loading and registering plugin %s", entry_point.name)
                 self.register(entry_point.name, entry_point.load())
             except Exception:
-                logger.exception('Error initializing plugin %s', entry_point)
+                logger.exception("Error initializing plugin %s", entry_point)
 
-        smokesignal.emit('plugins_loaded')
+        smokesignal.emit("plugins_loaded")
 
     def reload(self, name):
         """
@@ -270,23 +271,23 @@ class Registry(object):
         """
         if name not in self.plugins:
             # FIXME: This should raise
-            return u"Unknown plugin '{0}'. Is it installed?".format(name)
+            return f"Unknown plugin '{name}'. Is it installed?"
 
-        for entry_point in iter_entry_points('helga_plugins'):
+        for entry_point in iter_entry_points("helga_plugins"):
             if entry_point.name != name:
                 continue
 
             # FIXME: exceptions should bubble up
             try:
-                module_name = getattr(entry_point, 'module_name', None)
+                module_name = getattr(entry_point, "module_name", None)
                 if module_name is None:
-                    value = getattr(entry_point, 'value')
-                    module_name = value.split(':')[0]
+                    value = entry_point.value
+                    module_name = value.split(":")[0]
                 reload(sys.modules[module_name])
                 self.register(entry_point.name, entry_point.load())
                 return True
             except Exception:
-                logger.exception('Failed to reload plugin %s', entry_point)
+                logger.exception("Failed to reload plugin %s", entry_point)
                 return False
 
     def prioritized(self, channel, high_to_low=True):
@@ -301,16 +302,20 @@ class Registry(object):
         plugins = []
         for name in self.enabled_plugins[channel]:
             if name not in self.plugins:
-                logger.debug('Plugin %s may not be installed or have incorrect entry_point information', name)
+                logger.debug(
+                    "Plugin %s may not be installed or have incorrect entry_point information", name
+                )
                 continue
 
             # Decorated functions will have this
-            if hasattr(self.plugins[name], '_plugins'):
+            if hasattr(self.plugins[name], "_plugins"):
                 plugins.extend(self.plugins[name]._plugins)
             else:
                 plugins.append(self.plugins[name])
 
-        return sorted(plugins, key=lambda p: getattr(p, 'priority', PRIORITY_NORMAL), reverse=high_to_low)
+        return sorted(
+            plugins, key=lambda p: getattr(p, "priority", PRIORITY_NORMAL), reverse=high_to_low
+        )
 
     def preprocess(self, client, channel, nick, message):
         """
@@ -328,7 +333,7 @@ class Registry(object):
             try:
                 channel, nick, message = plugin.preprocess(client, channel, nick, message)
             except Exception:
-                logger.exception('Calling preprocess on plugin %s failed', plugin)
+                logger.exception("Calling preprocess on plugin %s failed", plugin)
                 continue
 
         return channel, nick, message
@@ -350,7 +355,7 @@ class Registry(object):
         :returns: a list of non-empty unicode response strings
         """
         responses = []
-        first_responder = getattr(settings, 'PLUGIN_FIRST_RESPONDER_ONLY', False)
+        first_responder = getattr(settings, "PLUGIN_FIRST_RESPONDER_ONLY", False)
 
         for plugin in self.prioritized(channel):
             try:
@@ -360,7 +365,7 @@ class Registry(object):
                     break
                 continue  # pragma: no cover Python == 2.7
             except Exception:
-                logger.exception('Calling process on plugin %s failed', plugin)
+                logger.exception("Calling process on plugin %s failed", plugin)
                 continue
 
             if not resp:
@@ -369,7 +374,7 @@ class Registry(object):
             # Chained decorator style plugins return a list of strings
             if isinstance(resp, (tuple, list)):
                 # Be sure to filter Nones, then strip
-                responses.extend(map(lambda s: (s or '').strip(), resp))
+                responses.extend((s or "").strip() for s in resp)
             else:
                 responses.append(resp.strip())
 
@@ -384,7 +389,7 @@ class Registry(object):
 registry = Registry()
 
 
-class Plugin(object):
+class Plugin:
     """
     The base class for helga plugins. There are three main methods of this base class that are
     important for creating class-based plugins.
@@ -406,6 +411,7 @@ class Plugin(object):
     do the actual work to generate a response. In other words, ``process`` should handle
     checking if the plugin should handle a message and then return whatever ``run`` returns.
     """
+
     #: The registered priority of the plugin
     priority = PRIORITY_NORMAL
 
@@ -510,22 +516,22 @@ class Command(Plugin):
     """
 
     #: The command string, i.e. 'search' for a command 'helga search foo'
-    command = ''
+    command = ""
 
     #: A list of command aliases. If a command 'search' has an alias list ['s'], then
     #: 'helga search foo' and 'helga s foo' will both run the command
-    aliases = []
+    aliases: list = []
 
     #: An optional help string for the command. This is used by the builtin
     #: :ref:`builtin.plugins.help` plugin
-    help = ''
+    help = ""
 
     #: A boolean indicating whether or not to use shlex arg string parsing rather than naive
     #: whitespace splitting
     shlex = False
 
-    def __init__(self, command='', aliases=None, help='', priority=PRIORITY_NORMAL, shlex=False):
-        super(Command, self).__init__(priority)
+    def __init__(self, command="", aliases=None, help="", priority=PRIORITY_NORMAL, shlex=False):
+        super().__init__(priority)
         self.command = command or self.command
         self.aliases = aliases or self.aliases
         self.help = help or self.help
@@ -551,27 +557,27 @@ class Command(Plugin):
         # short alias versions will trump the more verbose ones
         choices = sorted(choices, key=len, reverse=True)
 
-        nick_prefix = ''
+        nick_prefix = ""
 
         # Handle multiple ways to parse this command
-        prefix_botnick = getattr(settings, 'COMMAND_PREFIX_BOTNICK', None)
+        prefix_botnick = getattr(settings, "COMMAND_PREFIX_BOTNICK", None)
         if prefix_botnick is not None:
-            fmt = r'{0}\W*\s'
+            fmt = r"{0}\W*\s"
             if isinstance(prefix_botnick, str):
                 nick_prefix = fmt.format(prefix_botnick)
             elif prefix_botnick:
                 nick_prefix = fmt.format(botnick)
 
-        prefixes = filter(bool, [nick_prefix, getattr(settings, 'COMMAND_PREFIX_CHAR', '!')])
-        prefix = '({0})'.format('|'.join(prefixes))
+        prefixes = filter(bool, [nick_prefix, getattr(settings, "COMMAND_PREFIX_CHAR", "!")])
+        prefix = "({})".format("|".join(prefixes))
 
-        pat = r'^{0}({1})($|\s(.*)$)'.format(prefix, '|'.join(choices))
+        pat = r"^{}({})($|\s(.*)$)".format(prefix, "|".join(choices))
 
         try:
             _, cmd, _, argstr = re.findall(pat, message, re.IGNORECASE)[0]
         except (IndexError, ValueError):
             # FIXME: Log here?
-            return u'', []
+            return "", []
 
         return cmd, list(filter(bool, self._parse_argstr(argstr)))
 
@@ -595,7 +601,7 @@ class Command(Plugin):
         if self.shlex or settings.COMMAND_ARGS_SHLEX:
             argv = shlex.split(argstr.strip())
         else:
-            argv = argstr.strip().split(' ')
+            argv = argstr.strip().split(" ")
 
         return argv
 
@@ -641,7 +647,7 @@ class Command(Plugin):
 
         if settings.COMMAND_IGNORECASE:
             command = command.lower()
-            all_commands = map(methodcaller('lower'), all_commands)
+            all_commands = map(methodcaller("lower"), all_commands)
 
         if command not in all_commands:
             return None
@@ -654,13 +660,14 @@ class Match(Plugin):
     A subclass of :class:`Plugin` for match type plugins (see :ref:`plugins.types`). Matches
     have a default priority of :data:`~helga.plugins.PRIORITY_LOW`
     """
+
     #: A regular expression string used to match against a chat message. Optionally, this attribute can
     #: be a callable that accepts a chat message string as its only argument and returns a value that
     #: can be evaluated for truthiness.
-    pattern = ''
+    pattern = ""
 
-    def __init__(self, pattern='', priority=PRIORITY_LOW):
-        super(Match, self).__init__(priority)
+    def __init__(self, pattern="", priority=PRIORITY_LOW):
+        super().__init__(priority)
         self.pattern = pattern or self.pattern
 
     def run(self, client, channel, nick, message, matches):
@@ -696,10 +703,7 @@ class Match(Plugin):
         :returns: the result of ``re.findall`` if pattern is a string, otherwise the return value of
                   calling the ``pattern`` attribute with the message as a parameter
         """
-        if callable(self.pattern):
-            fn = self.pattern
-        else:
-            fn = functools.partial(re.findall, self.pattern)
+        fn = self.pattern if callable(self.pattern) else functools.partial(re.findall, self.pattern)
 
         try:
             return fn(message)
@@ -729,7 +733,7 @@ class Match(Plugin):
         return self.run(client, channel, nick, message, matches)
 
 
-def command(command, aliases=None, help='', priority=PRIORITY_NORMAL, shlex=False):
+def command(command, aliases=None, help="", priority=PRIORITY_NORMAL, shlex=False):
     """
     A decorator for creating command plugins
 

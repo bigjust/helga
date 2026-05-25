@@ -12,42 +12,39 @@ Twisted protocol and communication implementations for Slack.com
 #   Twisted reactor (maybe even create a "txslackclient" library in the distant
 #   future?)
 
+import contextlib
 import html
 import json
 import re
 import uuid
-
 from functools import partial
 
-import smokesignal
 import requests
-
+import smokesignal
+from autobahn.twisted.websocket import WebSocketClientFactory, WebSocketClientProtocol
 from twisted.internet import reactor, task
-from autobahn.twisted.websocket import WebSocketClientFactory
-from autobahn.twisted.websocket import WebSocketClientProtocol
 
-from helga import settings, log
+from helga import log, settings
 from helga.comm.base import BaseClient
 from helga.plugins import registry
 
-
 logger = log.getLogger(__name__)
 
-SLACK_API_BASE = 'https://slack.com/api/'
+SLACK_API_BASE = "https://slack.com/api/"
 
 
 def api(action, **data):
-    logger.debug('Slack API request: /%s -> %s', action, data)
+    logger.debug("Slack API request: /%s -> %s", action, data)
 
     # Slack API key, eg xoxb-12345678901-A1b2C3deFgHiJkLmNoPqRsTu
-    data.update({'token': settings.SERVER['API_KEY']})
+    data.update({"token": settings.SERVER["API_KEY"]})
 
     response = requests.post(SLACK_API_BASE + action, data=data)
 
     data = response.json()
 
-    if not data['ok']:
-        raise SlackError(api=action, error=data['error'])
+    if not data["ok"]:
+        raise SlackError(api=action, error=data["error"])
 
     return data
 
@@ -57,16 +54,17 @@ class Factory(WebSocketClientFactory):
     Handle a constructor with no args.
     Kill the reactor when the connection to the Slack RTM server drops.
     """
+
     def __init__(self):
-        logger.info('Initiating Slack RTM start request')
-        data = api('rtm.start', no_latest=1)
+        logger.info("Initiating Slack RTM start request")
+        data = api("rtm.start", no_latest=1)
 
         # Make the protocol a partial so that we can send the full info from rtm.start
         self.protocol = partial(Client, data)
 
-        logger.info('creating WebSocketClientFactory with %s', data['url'])
+        logger.info("creating WebSocketClientFactory with %s", data["url"])
 
-        return WebSocketClientFactory.__init__(self, url=data['url'])
+        return WebSocketClientFactory.__init__(self, url=data["url"])
 
     def clientConnectionLost(self, connector, reason):
         """
@@ -79,11 +77,11 @@ class Factory(WebSocketClientFactory):
         the main helga process receives SIGINT (ctrl-c).
         """
         # FIXME: need to handle auto reconnects
-        logger.info('Connection to server lost: %s', reason)
+        logger.info("Connection to server lost: %s", reason)
 
         # FIXME: Max retries
-        if getattr(settings, 'AUTO_RECONNECT', True):
-            delay = getattr(settings, 'AUTO_RECONNECT_DELAY', 5)
+        if getattr(settings, "AUTO_RECONNECT", True):
+            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
             reactor.callLater(delay, connector.connect)
         else:
             raise reason
@@ -96,40 +94,39 @@ class Factory(WebSocketClientFactory):
         :data:`~helga.settings.AUTO_RECONNECT` and
         :data:`~helga.settings.AUTO_RECONNECT_DELAY`)
         """
-        logger.warning('Connection to server failed: %s', reason)
+        logger.warning("Connection to server failed: %s", reason)
         reactor.stop()
 
 
-class Client(WebSocketClientProtocol, BaseClient):
-
+class Client(WebSocketClientProtocol, BaseClient):  # type: ignore[misc]
     def __init__(self, rtm_start_data, *a, **kw):
         BaseClient.__init__(self)
 
         # Slack prompts users to set up a bot account's name when setting up
         # the API key. So the bot's name is already defined server-side, and we
         # just have to look it up. In fact, we ignore settings.NICK.
-        self.nickname = rtm_start_data['self']['name']
+        self.nickname = rtm_start_data["self"]["name"]
 
         # Additionally, it is just simpler to override the user's
         # COMMAND_PREFIX_BOTNICK setting here, so to reduce the need for manual
         # configuration.
-        settings.COMMAND_PREFIX_BOTNICK = '@?' + self.nickname
+        settings.COMMAND_PREFIX_BOTNICK = "@?" + self.nickname
 
         # Maps of channel/user id -> name
         channels = (
-            (rtm_start_data.get('channels') or []) +
-            (rtm_start_data.get('mpims') or []) +
-            (rtm_start_data.get('ims') or []) +
-            (rtm_start_data.get('groups') or [])
+            (rtm_start_data.get("channels") or [])
+            + (rtm_start_data.get("mpims") or [])
+            + (rtm_start_data.get("ims") or [])
+            + (rtm_start_data.get("groups") or [])
         )
 
-        users = rtm_start_data.get('users') or []
+        users = rtm_start_data.get("users") or []
 
         try:
             self._cache_all_channel_names(channels)
             self._cache_all_user_names(users)
         except Exception as e:
-            logger.error('Failed to pre-fetch channels and users: %s', e)
+            logger.error("Failed to pre-fetch channels and users: %s", e)
 
         # FIXME: setup reactor recurring tasks to refresh the list of channels/users
         self.refresh_channels = task.LoopingCall(self._cache_all_channel_names)
@@ -142,8 +139,8 @@ class Client(WebSocketClientProtocol, BaseClient):
         self._i_am_bot = False
 
         for user in users:
-            if user['name'] == self.nickname:
-                self._i_am_bot = user['is_bot']
+            if user["name"] == self.nickname:
+                self._i_am_bot = user["is_bot"]
                 break
 
         # With websockets, we'll get replies to messages we attempt to send.
@@ -163,43 +160,45 @@ class Client(WebSocketClientProtocol, BaseClient):
         try:
             data = json.loads(msg)
         except ValueError as e:
-            logger.error('Error parsing WebSocket message %s : %s' % (msg, e))
+            logger.error(f"Error parsing WebSocket message {msg} : {e}")
             return
 
         # Is this a response to a previous message?
-        if 'reply_to' in data:
-            return self.onMessageAck(int(data['reply_to']), data)
+        if "reply_to" in data:
+            return self.onMessageAck(int(data["reply_to"]), data)
 
-        if 'type' not in data:
+        if "type" not in data:
             # Don't know how to handle this
             return
 
         # Actions we'll never handle and reduce log noise
-        if data['type'] in ('desktop_notification', 'user_typing'):
+        if data["type"] in ("desktop_notification", "user_typing"):
             return
 
-        method_name = 'slack_{}'.format(data['type'])
+        method_name = "slack_{}".format(data["type"])
 
-        if 'subtype' in data:
-            method_name = '{}_{}'.format(method_name, data['subtype'])
+        if "subtype" in data:
+            method_name = "{}_{}".format(method_name, data["subtype"])
 
         try:
             getattr(self, method_name)(data)
         except AttributeError:
-            logger.info('No implementation for %r', method_name)
+            logger.info("No implementation for %r", method_name)
         except Exception:
-            logger.exception('Failed to handle method call to %s', method_name)
+            logger.exception("Failed to handle method call to %s", method_name)
 
     def onMessageAck(self, request_id, response):
-        logger.debug('onMessageAck %s %s', request_id, response)
+        logger.debug("onMessageAck %s %s", request_id, response)
 
         # We're ACK'ing the request, so pop from the request map
         request = self._requests.pop(request_id, None)
 
         if not request:
-            logger.error('Received response for unknown message ID %s: %s', request_id, response)
-        elif not response['ok']:
-            logger.error('WebSocket request %s received error %s', request_id, response.get('error', ''))
+            logger.error("Received response for unknown message ID %s: %s", request_id, response)
+        elif not response["ok"]:
+            logger.error(
+                "WebSocket request %s received error %s", request_id, response.get("error", "")
+            )
 
     def slack_hello(self, data):
         """
@@ -208,17 +207,17 @@ class Client(WebSocketClientProtocol, BaseClient):
 
         :param data: dict from JSON received in WebSocket message
         """
-        smokesignal.emit('signon', self)
+        smokesignal.emit("signon", self)
 
     def slack_message_channel_join(self, data):
-        user = self._get_user_name(data['user'])
-        channel = self._get_channel_name(data['channel'])
-        smokesignal.emit('user_joined', self, user, channel)
+        user = self._get_user_name(data["user"])
+        channel = self._get_channel_name(data["channel"])
+        smokesignal.emit("user_joined", self, user, channel)
 
     def slack_message_channel_leave(self, data):
-        user = self._get_user_name(data['user'])
-        channel = self._get_channel_name(data['channel'])
-        smokesignal.emit('user_left', self, user, channel)
+        user = self._get_user_name(data["user"])
+        channel = self._get_channel_name(data["channel"])
+        smokesignal.emit("user_left", self, user, channel)
 
     def slack_message(self, data):
         """
@@ -229,21 +228,21 @@ class Client(WebSocketClientProtocol, BaseClient):
         :param data: dict from JSON received in WebSocket message
         """
         # Look up the human-readable name for this user ID.
-        user = self._get_user_name(data['user'])
+        user = self._get_user_name(data["user"])
 
         # If we don't ignore this, we'll get infinite replies
         if user == self.nickname:
             return
 
-        channel = self._get_channel_name(data['channel'])
+        channel = self._get_channel_name(data["channel"])
 
         if channel:
             # If this was a legit channel, prefix it with a hash for later consistency
-            channel = u'#{}'.format(channel)
+            channel = f"#{channel}"
 
         # I'm not sure if 100% of all messages have a "text" value. Use a blank
         # string fallback to be safe.
-        message = data.get('text', '')
+        message = data.get("text", "")
 
         message = self._parse_incoming_message(message)
 
@@ -251,10 +250,8 @@ class Client(WebSocketClientProtocol, BaseClient):
         # logger.debug('[<--] %s/%s - %s', channel, user, message)
 
         # Some things should go first
-        try:
+        with contextlib.suppress(TypeError, ValueError):
             channel, user, message = registry.preprocess(self, channel, user, message)
-        except (TypeError, ValueError):
-            pass
 
         # Update last message
         self.last_message[channel][user] = message
@@ -262,7 +259,7 @@ class Client(WebSocketClientProtocol, BaseClient):
         responses = registry.process(self, channel, user, message)
 
         if responses:
-            return self.msg(channel, u'\n'.join(responses))
+            return self.msg(channel, "\n".join(responses))
 
     def me(self, channel, message):
         """
@@ -277,7 +274,7 @@ class Client(WebSocketClientProtocol, BaseClient):
         :type  message: ``str``
         """
         # logger.debug('[-->] %s - /me %s', channel, message)
-        return self._send_message(channel, message, subtype='me_message')
+        return self._send_message(channel, message, subtype="me_message")
 
     def msg(self, channel, message):
         """
@@ -292,9 +289,9 @@ class Client(WebSocketClientProtocol, BaseClient):
         # First, sanitize the message
         message = self._sanitize(message)
 
-        logger.debug('[-->] %s - %s', channel, message)
+        logger.debug("[-->] %s - %s", channel, message)
 
-        if channel.startswith('#'):
+        if channel.startswith("#"):
             return self._send_message(channel, message)
         else:
             # In this case we need to fiddle with the API, do this async
@@ -312,16 +309,16 @@ class Client(WebSocketClientProtocol, BaseClient):
 
         # Hit the Web API
         try:
-            data = api('conversations.open', users=user_id)
+            data = api("conversations.open", users=user_id)
         except SlackError:
-            logger.exception('Cannot initiate private message with user %s', user_id)
+            logger.exception("Cannot initiate private message with user %s", user_id)
             return
 
-        channel_id = data['channel']['id']
+        channel_id = data["channel"]["id"]
 
         # Update our internal cache if we don't know about it
-        if not data.get('already_open', False):
-            channel_name = data['channel']['name']
+        if not data.get("already_open", False):
+            channel_name = data["channel"]["name"]
             self._channel_names[channel_id] = channel_name
 
         self._send_message(self._get_channel_name(channel_id), message)
@@ -330,25 +327,25 @@ class Client(WebSocketClientProtocol, BaseClient):
         channel = self._get_channel_id(channel)
 
         if self._i_am_bot:
-            msg = 'Bots cannot leave channels by themselves. They must be kicked'
-            logger.warning('Cannot leave %s: %s', channel, msg)
+            msg = "Bots cannot leave channels by themselves. They must be kicked"
+            logger.warning("Cannot leave %s: %s", channel, msg)
             return msg
         else:
-            reactor.callLater(0, api, 'conversations.leave', channel=channel)
+            reactor.callLater(0, api, "conversations.leave", channel=channel)
 
     def join(self, channel, *args, **kwargs):
         if self._i_am_bot:
-            msg = 'Bots cannot join channels by themselves. They must be invited'
-            logger.warning('Cannot join %s: %s', channel, msg)
+            msg = "Bots cannot join channels by themselves. They must be invited"
+            logger.warning("Cannot join %s: %s", channel, msg)
             return msg
         else:
-            reactor.callLater(0, api, 'conversations.join', name=channel)
+            reactor.callLater(0, api, "conversations.join", name=channel)
 
     def _get_channel_name(self, channel_id):
-        return self._channel_names.get(channel_id, '')
+        return self._channel_names.get(channel_id, "")
 
     def _get_channel_id(self, name):
-        name = name.lstrip('#')
+        name = name.lstrip("#")
 
         for chan_id, chan_name in self._channel_names.items():
             if chan_name == name:
@@ -368,7 +365,7 @@ class Client(WebSocketClientProtocol, BaseClient):
         :raises: SlackError: If Web API request fails, for example if the
                              user could not be found.
         """
-        return self._user_names.get(user_id, '')
+        return self._user_names.get(user_id, "")
 
     def _get_user_id(self, name):
         """
@@ -381,7 +378,7 @@ class Client(WebSocketClientProtocol, BaseClient):
         :rtype: ``str``
         :raises: RuntimeError: If the requested user could not be found.
         """
-        name = name.lstrip('@')
+        name = name.lstrip("@")
 
         for user_id, user_name in self._user_names.items():
             if user_name == name:
@@ -397,20 +394,20 @@ class Client(WebSocketClientProtocol, BaseClient):
         :raises: SlackError: If Web API request fails
         """
         if channels is None:
-            logger.debug('Fetching full channel list from slack API')
+            logger.debug("Fetching full channel list from slack API")
             try:
-                channels = api('conversations.list')['channels']
+                channels = api("conversations.list")["channels"]
             except SlackError:
-                logger.exception('Failed to get full channel list from slack')
+                logger.exception("Failed to get full channel list from slack")
                 return
 
         channel_names = {}
 
         for c in channels:
             try:
-                channel_names[c['id']] = c['name']
+                channel_names[c["id"]] = c["name"]
             except KeyError:
-                channel_names[c['id']] = c['user']
+                channel_names[c["id"]] = c["user"]
 
         self._channel_names = channel_names
 
@@ -422,17 +419,17 @@ class Client(WebSocketClientProtocol, BaseClient):
         :raises: SlackError: If Web API request fails
         """
         if users is None:
-            logger.debug('Fetching full user list from slack API')
+            logger.debug("Fetching full user list from slack API")
             try:
-                users = api('users.list')['members']
+                users = api("users.list")["members"]
             except SlackError:
-                logger.exception('Failed to get full user list from slack')
+                logger.exception("Failed to get full user list from slack")
                 return
 
         self._user_names = {}
 
         for user in users:
-            self._user_names[user['id']] = user['name']
+            self._user_names[user["id"]] = user["name"]
 
     def _parse_incoming_message(self, message):
         """
@@ -445,15 +442,15 @@ class Client(WebSocketClientProtocol, BaseClient):
         :param message: message string to parse, eg "<@U0123ABCD> hello".
         :returns: a translated string, eg. "@adeza hello".
         """
-        user_regex = r'(<@(U[0-9A-Z]+)(?:\|[^>]+)?>)'
+        user_regex = r"(<@(U[0-9A-Z]+)(?:\|[^>]+)?>)"
         for full_match, user_id in re.findall(user_regex, message):
             user = self._get_user_name(user_id)
-            message = message.replace(full_match, '@' + user)
+            message = message.replace(full_match, "@" + user)
 
-        channel_regex = r'(<#([0-9A-Z]+)(?:\|[^>]+)?>)'
+        channel_regex = r"(<#([0-9A-Z]+)(?:\|[^>]+)?>)"
         for full_match, channel_id in re.findall(channel_regex, message):
             channel = self._get_channel_name(channel_id)
-            message = message.replace(full_match, '#' + channel)
+            message = message.replace(full_match, "#" + channel)
 
         # Unescape HTML entities
         message = html.unescape(message)
@@ -468,9 +465,9 @@ class Client(WebSocketClientProtocol, BaseClient):
 
         :param message: message string to sanitize, eg "look over there ->"
         """
-        message = re.sub(r'&', '&amp;', message)
-        message = re.sub(r'<', '&lt;', message)
-        message = re.sub(r'>', '&gt;', message)
+        message = re.sub(r"&", "&amp;", message)
+        message = re.sub(r"<", "&lt;", message)
+        message = re.sub(r">", "&gt;", message)
         return message
 
     def _send_message(self, channel, message, **extra):
@@ -487,10 +484,10 @@ class Client(WebSocketClientProtocol, BaseClient):
 
         # Assemble JSON to send
         data = {
-            'id': message_id,
-            'channel': channel,
-            'text': message,
-            'type': 'message',
+            "id": message_id,
+            "channel": channel,
+            "text": message,
+            "type": "message",
         }
 
         # Add any extra params
@@ -506,15 +503,15 @@ class Client(WebSocketClientProtocol, BaseClient):
 
         :param data: dict from JSON received in WebSocket message
         """
-        channel = data['channel']['name']
+        channel = data["channel"]["name"]
 
-        logger.info('Joined %s', channel)
+        logger.info("Joined %s", channel)
 
         # Update caches
         self.channels.add(channel)
-        self._channel_names[data['channel']['id']] = channel
+        self._channel_names[data["channel"]["id"]] = channel
 
-        smokesignal.emit('join', self, channel)
+        smokesignal.emit("join", self, channel)
 
     def slack_channel_left(self, data):
         """
@@ -523,22 +520,22 @@ class Client(WebSocketClientProtocol, BaseClient):
         :param data: dict from JSON received in WebSocket message
         """
         # Convert the slack channel id
-        channel = self._get_channel_name(data['channel'])
+        channel = self._get_channel_name(data["channel"])
 
-        logger.info('Left %s', channel)
+        logger.info("Left %s", channel)
 
         # Update caches
         self.channels.discard(channel)
-        self._channel_names.pop(data['channel'], None)
+        self._channel_names.pop(data["channel"], None)
 
-        smokesignal.emit('left', self, channel)
+        smokesignal.emit("left", self, channel)
 
     def slack_channel_created(self, data):
         """
         Triggers when a new channel is created.
         """
-        id_ = data['channel']['id']
-        name = data['channel']['name']
+        id_ = data["channel"]["id"]
+        name = data["channel"]["name"]
         self._channel_names[id_] = name
 
     # channel_rename is the exact same logic as channel_create
@@ -553,16 +550,15 @@ class Client(WebSocketClientProtocol, BaseClient):
         """
         Triggers when a channel is deleted.
         """
-        try:
-            del self._channel_names[data['channel']['id']]
-        except KeyError:
-            pass
+        with contextlib.suppress(KeyError):
+            del self._channel_names[data["channel"]["id"]]
 
 
 class SlackError(RuntimeError):
     """
     Raise this when the Slack Web API returns an error.
     """
+
     def __init__(self, api, error, *args):
         """
         :param api: The API URL endpoint, for example "channels.info"
@@ -571,6 +567,6 @@ class SlackError(RuntimeError):
         """
         self.api = api
         self.error = error
-        message = '%s in %s' % (error, api)
+        message = f"{error} in {api}"
         self.message = message
-        super(SlackError, self).__init__(message, *args)
+        super().__init__(message, *args)

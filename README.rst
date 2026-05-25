@@ -1,14 +1,20 @@
 helga
 =====
 
-.. image:: https://img.shields.io/travis/shaunduncan/helga/master.svg
-    :target: https://travis-ci.org/shaunduncan/helga
+.. image:: https://github.com/shaunduncan/helga/workflows/CI/badge.svg
+    :target: https://github.com/shaunduncan/helga/actions
 
-.. image:: https://img.shields.io/coveralls/shaunduncan/helga/master.svg
-    :target: https://coveralls.io/r/shaunduncan/helga?branch=master
+.. image:: https://codecov.io/gh/shaunduncan/helga/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/shaunduncan/helga
 
 .. image:: https://img.shields.io/pypi/v/helga.svg
     :target: https://pypi.python.org/pypi/helga
+
+.. image:: https://img.shields.io/pypi/pyversions/helga.svg
+    :target: https://pypi.python.org/pypi/helga
+
+.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
+    :target: https://github.com/psf/black
 
 
 About
@@ -36,6 +42,14 @@ Contributions are **always** welcomed, whether they be in the form of bug fixes,
 or just bug reports. To report any issues, please create a ticket on `github`_. For code
 changes, please note that any pull request will be denied a merge if the test suite fails.
 
+See `CONTRIBUTING.md`_ for detailed contribution guidelines, including:
+
+- Development setup with modern tools (Black, Ruff, Mypy)
+- Pre-commit hooks for code quality
+- Testing guidelines
+- Code style standards
+- Pull request process
+
 If you are looking to get help with helga, join the #helgabot IRC channel on freenode.
 
 
@@ -47,6 +61,36 @@ the cluster using `docker-compose up`, you can connect to the irc on localhost p
 join the #test channel.
 
 
+Deployment
+----------
+
+IBM Cloud
+~~~~~~~~~
+
+Helga can be easily deployed to IBM Cloud using Cloud Foundry. A complete deployment guide,
+configuration files, and automated deployment script are included:
+
+- **Quick Start**: Run ``./deploy-ibmcloud.sh`` for an interactive deployment
+- **Manual Deployment**: See ``IBM_CLOUD_DEPLOYMENT.md`` for detailed instructions
+- **Configuration**: Edit ``ibmcloud_settings.py`` or use environment variables
+
+The deployment includes:
+
+- Cloud Foundry manifest (``manifest.yml``)
+- IBM Cloud-specific settings (``ibmcloud_settings.py``)
+- MongoDB service integration
+- Environment-based configuration
+
+For complete instructions, see `IBM_CLOUD_DEPLOYMENT.md`_.
+
+Docker
+~~~~~~
+
+A docker compose file is included for local development and testing. It includes an IRC server
+and MongoDB instance. Once you bring up the cluster using ``docker-compose up``, you can connect
+to the IRC server on localhost port 6667 and join the #test channel.
+
+
 License
 -------
 Copyright (c) 2014 Shaun Duncan
@@ -55,8 +99,23 @@ Helga is open source software, dual licensed under the `MIT`_ and `GPL`_ license
 was chosen for this project so that plugin authors can create plugins under their choice
 of license that is compatible with this project.
 
+Modernization
+-------------
+
+Helga has been modernized with current Python best practices and tooling. See `MODERNIZATION.md`_
+for details on:
+
+- Modern Python packaging (pyproject.toml)
+- GitHub Actions CI/CD
+- Pre-commit hooks and linting (Ruff, Black, Mypy)
+- Enhanced Docker configuration
+- Automated dependency updates
+
 .. _`GPL`: https://github.com/shaunduncan/helga/blob/master/LICENSE-GPL
 .. _`MIT`: https://github.com/shaunduncan/helga/blob/master/LICENSE-MIT
 .. _`Twisted`: https://twistedmatrix.com/trac/
 .. _`olga`: https://github.com/thepeopleseason/olga
 .. _`github`: https://github.com/shaunduncan/helga/issues
+.. _`IBM_CLOUD_DEPLOYMENT.md`: IBM_CLOUD_DEPLOYMENT.md
+.. _`CONTRIBUTING.md`: CONTRIBUTING.md
+.. _`MODERNIZATION.md`: MODERNIZATION.md

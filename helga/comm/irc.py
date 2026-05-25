@@ -1,17 +1,18 @@
 """
 Twisted protocol and communication implementations for IRC
 """
+
+import base64
+import contextlib
 import time
 
 import smokesignal
-
 from twisted.internet import protocol, reactor
 from twisted.words.protocols import irc
 
-from helga import settings, log
+from helga import log, settings
 from helga.comm.base import BaseClient
 from helga.plugins import registry
-
 
 logger = log.getLogger(__name__)
 
@@ -22,6 +23,7 @@ class Factory(protocol.ClientFactory):
     auto reconnect if helga is configured for it (see settings :data:`~helga.settings.AUTO_RECONNECT`
     and :data:`~helga.settings.AUTO_RECONNECT_DELAY`)
     """
+
     def __init__(self):
         self.client = Client(factory=self)
 
@@ -33,7 +35,7 @@ class Factory(protocol.ClientFactory):
         :param address: an implementation of `twisted.internet.interfaces.IAddress`
         :returns: an instance of :class:`Client`
         """
-        logger.debug('Constructing Helga protocol')
+        logger.debug("Constructing Helga protocol")
         return self.client
 
     def clientConnectionLost(self, connector, reason):
@@ -42,11 +44,11 @@ class Factory(protocol.ClientFactory):
         is configured for it (see settings :data:`~helga.settings.AUTO_RECONNECT` and
         :data:`~helga.settings.AUTO_RECONNECT_DELAY`)
         """
-        logger.info('Connection to server lost: %s', reason)
+        logger.info("Connection to server lost: %s", reason)
 
         # FIXME: Max retries
-        if getattr(settings, 'AUTO_RECONNECT', True):
-            delay = getattr(settings, 'AUTO_RECONNECT_DELAY', 5)
+        if getattr(settings, "AUTO_RECONNECT", True):
+            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
             reactor.callLater(delay, connector.connect)
         else:
             raise reason
@@ -57,11 +59,11 @@ class Factory(protocol.ClientFactory):
         is configured for it (see settings :data:`~helga.settings.AUTO_RECONNECT` and
         :data:`~helga.settings.AUTO_RECONNECT_DELAY`)
         """
-        logger.warning('Connection to server failed: %s', reason)
+        logger.warning("Connection to server failed: %s", reason)
 
         # FIXME: Max retries
-        if getattr(settings, 'AUTO_RECONNECT', True):
-            delay = getattr(settings, 'AUTO_RECONNECT_DELAY', 5)
+        if getattr(settings, "AUTO_RECONNECT", True):
+            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
             reactor.callLater(delay, connector.connect)
         else:
             reactor.stop()
@@ -75,7 +77,7 @@ class Client(irc.IRCClient, BaseClient):
     """
 
     #: The preferred IRC nick of the bot instance (setting :data:`~helga.settings.NICK`)
-    nickname = None
+    nickname = None  # type: ignore[assignment]
 
     #: A username should the IRC server require authentication (setting :data:`~helga.settings.SERVER`)
     username = None
@@ -88,27 +90,27 @@ class Client(irc.IRCClient, BaseClient):
     lineRate = None
 
     #: The URL where the source of the bot is found
-    sourceURL = 'http://github.com/shaunduncan/helga'
+    sourceURL = "http://github.com/shaunduncan/helga"
 
     #: The assumed encoding of IRC messages
-    encoding = 'UTF-8'
+    encoding = "UTF-8"
 
     #: A backup nick should the preferred :attr:`nickname` be taken. This defaults to a string in the
     #: form of the preferred nick plus the timestamp when the process was started (i.e. helga_12345)
-    erroneousNickFallback = None
+    erroneousNickFallback = None  # type: ignore[assignment]
 
     def __init__(self, factory=None):
         BaseClient.__init__(self)
 
         self.factory = factory
-        self.erroneousNickFallback = '{0}_{1}'.format(settings.NICK, int(time.time()))
+        self.erroneousNickFallback = f"{settings.NICK}_{int(time.time())}"
 
         # These are set here to ensure using properly overridden settings
         self.nickname = settings.NICK
-        self.username = settings.SERVER.get('USERNAME', None)
-        self.password = settings.SERVER.get('PASSWORD', None)
-        self.lineRate = getattr(settings, 'RATE_LIMIT', None)
-        self._use_sasl = settings.SERVER.get('SASL', False)
+        self.username = settings.SERVER.get("USERNAME", None)  # type: ignore[assignment]
+        self.password = settings.SERVER.get("PASSWORD", None)  # type: ignore[assignment]
+        self.lineRate = getattr(settings, "RATE_LIMIT", None)
+        self._use_sasl = settings.SERVER.get("SASL", False)
 
     def get_channel_logger(self, channel):
         """
@@ -134,32 +136,38 @@ class Client(irc.IRCClient, BaseClient):
         if not settings.CHANNEL_LOGGING:
             return
         chan_logger = self.get_channel_logger(channel)
-        chan_logger.info(message, extra={'nick': nick})
+        chan_logger.info(message, extra={"nick": nick})
 
     def connectionMade(self):
-        logger.info('Connection made to %s', settings.SERVER['HOST'])
+        logger.info("Connection made to %s", settings.SERVER["HOST"])
         if self._use_sasl:
-            self._reallySendLine('CAP REQ :sasl')
+            self._reallySendLine("CAP REQ :sasl")
         irc.IRCClient.connectionMade(self)
 
     def irc_CAP(self, prefix, params):
-        if params[1] != 'ACK' or params[2].split() != ['sasl']:
-            logger.info('SASL is not available!')
-            self.quit('')
-        sasl = ('{0}\0{0}\0{1}'.format(self.username, self.password)).encode('base64').strip()
-        self.sendLine('AUTHENTICATE PLAIN')
-        self.sendLine('AUTHENTICATE ' + sasl)
+        if params[1] != "ACK" or params[2].split() != ["sasl"]:
+            logger.info("SASL is not available!")
+            self.quit("")
+            return
+        sasl = (
+            base64.b64encode(f"{self.username}\0{self.username}\0{self.password}".encode())
+            .decode()
+            .strip()
+        )
+        self.sendLine("AUTHENTICATE PLAIN")
+        self.sendLine("AUTHENTICATE " + sasl)
 
     def irc_903(self, prefix, params):
-        self.sendLine('CAP END')
+        self.sendLine("CAP END")
 
     def irc_904(self, prefix, params):
-        logger.info('SASL auth failed: %s', params)
-        self.quit('')
+        logger.info("SASL auth failed: %s", params)
+        self.quit("")
+
     irc_905 = irc_904
 
     def connectionLost(self, reason):
-        logger.info('Connection to %s lost: %s', settings.SERVER['HOST'], reason)
+        logger.info("Connection to %s lost: %s", settings.SERVER["HOST"], reason)
         irc.IRCClient.connectionLost(self, reason)
 
     def signedOn(self):
@@ -175,7 +183,7 @@ class Client(irc.IRCClient, BaseClient):
             else:
                 self.join(channel)
 
-        smokesignal.emit('signon', self)
+        smokesignal.emit("signon", self)
 
     def joined(self, channel):
         """
@@ -184,10 +192,10 @@ class Client(irc.IRCClient, BaseClient):
 
         :param channel: the channel that has been joined
         """
-        logger.info('Joined %s', channel)
+        logger.info("Joined %s", channel)
         self.channels.add(channel)
-        self.sendLine("NAMES %s" % (channel,))
-        smokesignal.emit('join', self, channel)
+        self.sendLine(f"NAMES {channel}")
+        smokesignal.emit("join", self, channel)
 
     def left(self, channel):
         """
@@ -196,9 +204,9 @@ class Client(irc.IRCClient, BaseClient):
 
         :param channel: the channel that has been left
         """
-        logger.info('Left %s', channel)
+        logger.info("Left %s", channel)
         self.channels.discard(channel)
-        smokesignal.emit('left', self, channel)
+        smokesignal.emit("left", self, channel)
 
     def parse_nick(self, full_nick):
         """
@@ -208,7 +216,7 @@ class Client(irc.IRCClient, BaseClient):
         :param full_nick: the full IRC user string of the form ``{nick}!~{user}@{host}``
         :returns: The nick portion of the IRC user string
         """
-        return full_nick.split('!')[0]
+        return full_nick.split("!")[0]
 
     def is_public_channel(self, channel):
         """
@@ -217,7 +225,7 @@ class Client(irc.IRCClient, BaseClient):
 
         :param channel: the channel name to check
         """
-        return self.nickname != channel and channel.startswith('#')
+        return self.nickname != channel and channel.startswith("#")
 
     def privmsg(self, user, channel, message):
         """
@@ -234,7 +242,7 @@ class Client(irc.IRCClient, BaseClient):
         message = message.strip()
 
         # Log the incoming message and notify message subscribers
-        logger.debug('[<--] %s/%s - %s', channel, user, message)
+        logger.debug("[<--] %s/%s - %s", channel, user, message)
         is_public = self.is_public_channel(channel)
 
         # When we get a priv msg, the channel is our current nick, so we need to
@@ -246,16 +254,14 @@ class Client(irc.IRCClient, BaseClient):
             channel = user
 
         # Some things should go first
-        try:
+        with contextlib.suppress(TypeError, ValueError):
             channel, user, message = registry.preprocess(self, channel, user, message)
-        except (TypeError, ValueError):
-            pass
 
         # if not message.has_response:
         responses = registry.process(self, channel, user, message)
 
         if responses:
-            message = u'\n'.join(responses)
+            message = "\n".join(responses)
             self.msg(channel, message)
 
             if is_public:
@@ -276,19 +282,19 @@ class Client(irc.IRCClient, BaseClient):
 
         :param nickname: the nickname that was already taken
         """
-        logger.info('Nick %s already taken', nickname)
+        logger.info("Nick %s already taken", nickname)
 
-        parts = nickname.split('_')
+        parts = nickname.split("_")
         if len(parts) > 1:
             parts = parts[:-1]
 
-        stripped = '_'.join(parts)
-        self.nickname = '{0}_{1}'.format(stripped, int(time.time()))
+        stripped = "_".join(parts)
+        self.nickname = f"{stripped}_{int(time.time())}"
 
         return self.nickname
 
     def kickedFrom(self, channel, kicker, message):
-        logger.warning('%s kicked bot from %s: %s', kicker, channel, message)
+        logger.warning("%s kicked bot from %s: %s", kicker, channel, message)
         self.channels.discard(channel)
 
     def msg(self, channel, message):
@@ -299,7 +305,7 @@ class Client(irc.IRCClient, BaseClient):
                         will be sent as a private message to a user with that nick.
         :param message: The message to send
         """
-        logger.debug('[-->] %s - %s', channel, message)
+        logger.debug("[-->] %s - %s", channel, message)
         irc.IRCClient.msg(self, channel, message)
 
     def on_invite(self, inviter, invitee, channel):
@@ -312,7 +318,7 @@ class Client(irc.IRCClient, BaseClient):
         """
         nick = self.parse_nick(inviter)
         if invitee == self.nickname:
-            logger.info('%s invited %s to %s', nick, invitee, channel)
+            logger.info("%s invited %s to %s", nick, invitee, channel)
             self.join(channel)
 
     def irc_unknown(self, prefix, command, params):
@@ -323,7 +329,7 @@ class Client(irc.IRCClient, BaseClient):
         :param command: the IRC command received
         :param params: list of parameters for the given command
         """
-        if command.lower() == 'invite':
+        if command.lower() == "invite":
             self.on_invite(prefix, params[0], params[1])
 
     def me(self, channel, message):
@@ -346,7 +352,7 @@ class Client(irc.IRCClient, BaseClient):
         :param channel: the channel in which the event occurred
         """
         nick = self.parse_nick(user)
-        smokesignal.emit('user_joined', self, nick, channel)
+        smokesignal.emit("user_joined", self, nick, channel)
 
     def userLeft(self, user, channel):
         """
@@ -357,7 +363,7 @@ class Client(irc.IRCClient, BaseClient):
         :param channel: the channel in which the event occurred
         """
         nick = self.parse_nick(user)
-        smokesignal.emit('user_left', self, nick, channel)
+        smokesignal.emit("user_left", self, nick, channel)
 
     def join(self, channel, key=None):
         """
@@ -385,8 +391,8 @@ class Client(irc.IRCClient, BaseClient):
         :param newname: the nick of the user after the rename
         """
 
-        smokesignal.emit('user_rename', self, oldname, newname)
+        smokesignal.emit("user_rename", self, oldname, newname)
 
     def irc_RPL_NAMREPLY(self, prefix, params):
         nicks = params[3].split()
-        smokesignal.emit('names_reply', self, nicks)
+        smokesignal.emit("names_reply", self, nicks)
