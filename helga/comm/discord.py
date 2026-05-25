@@ -75,6 +75,7 @@ class Client(discord.Client, BaseClient):
         self.nickname = settings.NICK
         self._guild_cache = {}
         self._channel_cache = {}
+        self._processed_messages = set()
 
     async def on_ready(self):
         """
@@ -137,8 +138,16 @@ class Client(discord.Client, BaseClient):
 
         :param message: discord.Message object
         """
+        # Deduplicate: Discord gateway may send duplicate MESSAGE_CREATE events
+        msg_id = message.id
+        if msg_id in self._processed_messages:
+            return
+        self._processed_messages.add(msg_id)
+        if len(self._processed_messages) > 1000:
+            self._processed_messages.clear()
+
         # Ignore messages from the bot itself
-        if message.author == self.user:
+        if message.author.id == self.user.id:
             return
 
         # Ignore bot messages if configured
@@ -236,10 +245,16 @@ class Client(discord.Client, BaseClient):
         """
         # If channel is a string, find the actual channel object
         if isinstance(channel, str):
-            channel = self._find_channel(channel)
-            if not channel:
-                logger.error("Could not find channel: %s", channel)
-                return
+            found = self._find_channel(channel)
+            if found is None:
+                user = self._find_user(channel)
+                if user is not None:
+                    channel = await user.create_dm()
+                else:
+                    logger.error("Could not find channel or user: %s", channel)
+                    return
+            else:
+                channel = found
 
         try:
             # Discord has a 2000 character limit per message
