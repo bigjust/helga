@@ -21,7 +21,7 @@ ignore =
     # Line too long (using max-line-length instead)
     E501,
     # Line break style (minor)
-    W504,
+    W503, W504,
     # Invalid escape sequences (handled by raw strings where needed)
     W605,
     # Blank line at end of file
