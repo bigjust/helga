@@ -57,7 +57,7 @@ Create a settings file (e.g., `discord_settings.py`):
 ```python
 SERVER = {
     'TYPE': 'discord',
-    'TOKEN': '<your bot token>',  # Replace with your actual token
+    'TOKEN': 'YOUR_BOT_TOKEN_HERE',  # Replace with your actual token
 }
 
 NICK = 'helga'

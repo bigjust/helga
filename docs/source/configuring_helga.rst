@@ -193,12 +193,12 @@ A configuration for connecting to Discord might look like::
 
     SERVER = {
         'TYPE': 'discord',
-        'TOKEN': 'your_bot_token_here',
+        'TOKEN': 'YOUR_BOT_TOKEN_HERE',
     }
 
-The bot token is a long string. Use a placeholder like ``<your bot token>`` in docs
-and configuration examples. You can find your actual token in your application's Bot
-settings page.
+The bot token is a long string. In examples, use a clear placeholder such as
+``YOUR_BOT_TOKEN_HERE`` and keep your actual token secure. You can find your actual
+token in your application's Bot settings page.
 
 Discord bots automatically join servers when invited and have access to all channels
 they have permissions for. The :data:`~helga.settings.CHANNELS` setting is still
