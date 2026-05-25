@@ -190,6 +190,7 @@ norecursedirs = ["lib", ".git", ".tox", "dist", "build", "*.egg"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
+asyncio_mode = "auto"
 addopts = [
     "--strict-markers",
     "--strict-config",
@@ -222,8 +223,10 @@ isolated_build = true
 
 [testenv]
 deps =
+    -r{toxinidir}/requirements.txt
     pytest
     pytest-cov
+    pytest-asyncio
     mock
     pretend
     freezegun
