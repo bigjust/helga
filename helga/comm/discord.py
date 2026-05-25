@@ -55,9 +55,9 @@ class Factory:
             logger.error("Discord connection failed: %s", e)
             if getattr(settings, "AUTO_RECONNECT", True):
                 delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
-                reactor.callLater(delay, self.connect)
+                reactor.callFromThread(reactor.callLater, delay, self.connect)
             else:
-                reactor.stop()
+                reactor.callFromThread(reactor.stop)
 
 
 class Client(discord.Client, BaseClient):
@@ -264,7 +264,10 @@ class Client(discord.Client, BaseClient):
             # Discord has a 2000 character limit per message
             if len(message) > 2000:
                 # Split into multiple messages
-                chunks = [message[i : i + 2000] for i in range(0, len(message), 2000)]
+                chunks = []
+                for i in range(0, len(message), 2000):
+                    end = i + 2000
+                    chunks.append(message[i:end])
                 for chunk in chunks:
                     await channel.send(chunk)
             else:

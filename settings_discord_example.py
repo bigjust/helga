@@ -47,7 +47,7 @@ DEFAULT_CHANNEL_PLUGINS = True  # Enable plugins on all channels by default
 
 # Command prefix
 COMMAND_PREFIX_CHAR = "!"  # Commands can be invoked with !command
-COMMAND_PREFIX_BOTNICK = True  # Commands can be invoked with @helga command
+COMMAND_PREFIX_BOTNICK = True  # Commands can be invoked with helga command
 
 # Auto-reconnect settings
 AUTO_RECONNECT = True

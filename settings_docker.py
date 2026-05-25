@@ -1,7 +1,7 @@
 import os
 
-# Load .env file from project root if present
-_env_file = os.path.join(os.path.dirname(__file__), ".env")
+# Load .env file from current working directory (if present)
+_env_file = os.path.join(os.getcwd(), ".env")
 if os.path.isfile(_env_file):
     with open(_env_file) as f:
         for line in f:

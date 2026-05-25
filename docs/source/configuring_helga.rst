@@ -196,17 +196,20 @@ A configuration for connecting to Discord might look like::
         'TOKEN': 'your_bot_token_here',
     }
 
-The bot token is a long string that looks like ``MTk4NjIyNDgzNDcxOTI1MjQ4.Cl2FMQ.ZnCjm1XVW7vRze4b7Cq4se7kKWs``.
-You can find it in your application's Bot settings page.
+The bot token is a long string. Use a placeholder like ``<your bot token>`` in docs
+and configuration examples. You can find your actual token in your application's Bot
+settings page.
 
 Discord bots automatically join servers when invited and have access to all channels
 they have permissions for. The :data:`~helga.settings.CHANNELS` setting is still
 respected, but Discord bots cannot programmatically join or leave individual channels -
 they must be managed through Discord's permission system.
 
-Like Slack, Discord uses the "@ mentions" syntax for addressing users. The connector
-will automatically handle this, so you should not need to modify
-:data:`~helga.settings.COMMAND_PREFIX_BOTNICK` in your configuration.
+Discord supports "@ mentions" natively in chat, but Helga's Discord connector does not
+currently parse Discord mention IDs as command prefixes. Use
+:data:`~helga.settings.COMMAND_PREFIX_CHAR` (for example ``!help``) or enable
+:data:`~helga.settings.COMMAND_PREFIX_BOTNICK` to address commands by nickname
+(``helga help``).
 
 **Important Notes:**
 

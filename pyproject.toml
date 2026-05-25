@@ -5,9 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "helga"
 version = "2.0.0"
-description = "A full-featured chat bot for Python 3.7+ with plugin support"
+description = "A full-featured chat bot for Python 3.8+ with plugin support"
 readme = "README.rst"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 license = {text = "MIT OR GPL-3.0-or-later"}
 authors = [
     {name = "Shaun Duncan", email = "shaun.duncan@gmail.com"}
@@ -22,7 +22,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -100,7 +99,7 @@ helga = ["webhooks/logger/*.mustache"]
 # Black configuration
 [tool.black]
 line-length = 100
-target-version = ["py37", "py38", "py39", "py310", "py311", "py312"]
+target-version = ["py38", "py39", "py310", "py311", "py312"]
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -119,7 +118,7 @@ extend-exclude = '''
 # Ruff configuration
 [tool.ruff]
 line-length = 100
-target-version = "py37"
+target-version = "py38"
 
 [tool.ruff.lint]
 select = [
@@ -224,7 +223,7 @@ exclude_lines = [
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-envlist = py37,py38,py39,py310,py311,py312,py313,lint,type
+envlist = py38,py39,py310,py311,py312,py313,lint,type
 isolated_build = true
 
 [testenv]

@@ -4,7 +4,7 @@ This guide will help you set up Helga to work with Discord.
 
 ## Prerequisites
 
-- Python 3.7 or higher
+- Python 3.8 or higher
 - A Discord account
 - Administrator access to a Discord server (or ability to create one)
 
@@ -102,7 +102,7 @@ Once Helga is running and connected to Discord:
 ```
 !help
 !ping
-@helga help
+helga help
 ```
 
 ### In Channels
