@@ -1,0 +1,32 @@
+services:
+
+  irc:
+    image: inspircd/inspircd-docker:latest
+    ports:
+      - 6667:6667
+
+  mongo:
+    image: mongo:7
+    platform: linux/amd64
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=helga
+
+  helga:
+    build: .
+    environment:
+      - HELGA_IRC_SERVER=irc
+      - HELGA_MONGO_HOST=mongo
+    volumes:
+      - .:/code
+    depends_on:
+      - mongo
+      - irc
+
+volumes:
+  mongo_data:
+
+# Made with Bob

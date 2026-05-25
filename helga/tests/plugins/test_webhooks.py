@@ -58,7 +58,7 @@ def test_authenticated_fails_when_called(settings):
 
 class TestWebhookPlugin(object):
 
-    def setup(self):
+    def setup_method(self):
         self.plugin = webhooks.WebhookPlugin()
 
     def test_initializes_root_and_site(self):
@@ -68,7 +68,7 @@ class TestWebhookPlugin(object):
 
     def _make_mock(self, **attrs):
         m = Mock()
-        for k, v in attrs.iteritems():
+        for k, v in attrs.items():
             setattr(m, k, v)
         return m
 
@@ -289,7 +289,7 @@ class TestWebhookPlugin(object):
 
 class TestWebhookRoot(object):
 
-    def setup(self):
+    def setup_method(self):
         self.client = Mock()
         self.root = webhooks.WebhookRoot(self.client)
 

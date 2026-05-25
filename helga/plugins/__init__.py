@@ -3,8 +3,18 @@ Helga's core plugin library containing base implementations for creating plugins
 as well as utilities for managing plugins at runtime
 """
 from __future__ import absolute_import
+from importlib import reload
+
+try:
+    from importlib import metadata as importlib_metadata
+except ImportError:  # pragma: no cover
+    importlib_metadata = None
+
+try:
+    import pkg_resources
+except ImportError:  # pragma: no cover
+    pkg_resources = None
 import functools
-import pkg_resources
 import random
 import re
 import shlex
@@ -12,16 +22,32 @@ import sys
 import warnings
 
 from collections import defaultdict
-from itertools import ifilter, imap
 from operator import methodcaller
 
 import smokesignal
 
 from helga import log, settings
-from helga.util.encodings import from_unicode, to_unicode
 
 
 logger = log.getLogger(__name__)
+
+
+def iter_entry_points(group):
+    if importlib_metadata is not None:
+        try:
+            return tuple(importlib_metadata.entry_points(group=group))
+        except TypeError:  # pragma: no cover
+            # Python 3.9 and earlier: entry_points() returns a dict
+            eps = importlib_metadata.entry_points()
+            if isinstance(eps, dict):
+                return tuple(eps.get(group, []))
+            # Python 3.10+: entry_points() returns SelectableGroups
+            return tuple(ep for ep in eps if ep.group == group)
+
+    if pkg_resources is not None:
+        return pkg_resources.iter_entry_points(group=group)
+
+    return ()
 
 
 #: A collection of pre-canned acknowledgement type responses
@@ -109,7 +135,7 @@ class Registry(object):
         if not hasattr(self, 'plugins'):
             self.plugins = {}
 
-        self.plugin_names = set(ep.name for ep in pkg_resources.iter_entry_points('helga_plugins'))
+        self.plugin_names = set(ep.name for ep in iter_entry_points('helga_plugins'))
 
         # Plugins whitelist/blacklist
         self.whitelist_plugins = self._create_plugin_list('ENABLED_PLUGINS', default=True)
@@ -178,7 +204,7 @@ class Registry(object):
         return self.plugins.get(name, None)
 
     def disable(self, channel, *plugins):
-        """
+        r"""
         Disable a plugin or plugins on a desired channel
 
         :param channel: the desired chat channel
@@ -187,7 +213,7 @@ class Registry(object):
         self.enabled_plugins[channel] = self.enabled_plugins[channel].difference(set(plugins))
 
     def enable(self, channel, *plugins):
-        """
+        r"""
         Enable a plugin or plugins on a desired channel
 
         :param channel: the desired chat channel
@@ -217,7 +243,7 @@ class Registry(object):
             smokesignal.emit('plugins_loaded')
             return
 
-        for entry_point in pkg_resources.iter_entry_points(group='helga_plugins'):
+        for entry_point in iter_entry_points('helga_plugins'):
             if entry_point.name in self.blacklist_plugins:
                 logger.info('Skipping blacklisted plugin %s', entry_point.name)
                 continue
@@ -246,13 +272,17 @@ class Registry(object):
             # FIXME: This should raise
             return u"Unknown plugin '{0}'. Is it installed?".format(name)
 
-        for entry_point in pkg_resources.iter_entry_points(group='helga_plugins'):
+        for entry_point in iter_entry_points('helga_plugins'):
             if entry_point.name != name:
                 continue
 
             # FIXME: exceptions should bubble up
             try:
-                reload(sys.modules[entry_point.module_name])
+                module_name = getattr(entry_point, 'module_name', None)
+                if module_name is None:
+                    value = getattr(entry_point, 'value')
+                    module_name = value.split(':')[0]
+                reload(sys.modules[module_name])
                 self.register(entry_point.name, entry_point.load())
                 return True
             except Exception:
@@ -339,7 +369,7 @@ class Registry(object):
             # Chained decorator style plugins return a list of strings
             if isinstance(resp, (tuple, list)):
                 # Be sure to filter Nones, then strip
-                responses.extend(imap(lambda s: (s or '').strip(), resp))
+                responses.extend(map(lambda s: (s or '').strip(), resp))
             else:
                 responses.append(resp.strip())
 
@@ -348,7 +378,7 @@ class Registry(object):
 
         # FIXME: Explicit conversion to unicode might not make sense. Perpahs
         # a warning should be sent to the user? Or do we even care?
-        return map(to_unicode, ifilter(bool, responses))
+        return list(filter(bool, responses))
 
 
 registry = Registry()
@@ -526,8 +556,8 @@ class Command(Plugin):
         # Handle multiple ways to parse this command
         prefix_botnick = getattr(settings, 'COMMAND_PREFIX_BOTNICK', None)
         if prefix_botnick is not None:
-            fmt = '{0}\W*\s'
-            if isinstance(prefix_botnick, basestring):
+            fmt = r'{0}\W*\s'
+            if isinstance(prefix_botnick, str):
                 nick_prefix = fmt.format(prefix_botnick)
             elif prefix_botnick:
                 nick_prefix = fmt.format(botnick)
@@ -535,7 +565,7 @@ class Command(Plugin):
         prefixes = filter(bool, [nick_prefix, getattr(settings, 'COMMAND_PREFIX_CHAR', '!')])
         prefix = '({0})'.format('|'.join(prefixes))
 
-        pat = ur'^{0}({1})($|\s(.*)$)'.format(prefix, '|'.join(choices))
+        pat = r'^{0}({1})($|\s(.*)$)'.format(prefix, '|'.join(choices))
 
         try:
             _, cmd, _, argstr = re.findall(pat, message, re.IGNORECASE)[0]
@@ -543,7 +573,7 @@ class Command(Plugin):
             # FIXME: Log here?
             return u'', []
 
-        return cmd, filter(bool, self._parse_argstr(argstr))
+        return cmd, list(filter(bool, self._parse_argstr(argstr)))
 
     def _parse_argstr(self, argstr):
         """
@@ -563,11 +593,11 @@ class Command(Plugin):
 
         """
         if self.shlex or settings.COMMAND_ARGS_SHLEX:
-            argv = shlex.split(from_unicode(argstr.strip()))
+            argv = shlex.split(argstr.strip())
         else:
             argv = argstr.strip().split(' ')
 
-        return map(to_unicode, argv)
+        return argv
 
     def run(self, client, channel, nick, message, command, args):
         """

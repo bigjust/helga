@@ -52,7 +52,7 @@ def test_get_logger_uses_log_file(settings, logging):
 
     log.getLogger('foo')
     logging.handlers.RotatingFileHandler.assert_called_with(filename=settings.LOG_FILE,
-                                                            maxBytes=50*1024*1024,
+                                                            maxBytes=50 * 1024 * 1024,
                                                             backupCount=6)
 
 
@@ -134,7 +134,7 @@ def test_get_channel_logger_creates_log_dirs(settings, logging, os):
 
 class TestChannelLogFileHandler(object):
 
-    def setup(self):
+    def setup_method(self):
         self.handler = log.ChannelLogFileHandler('/tmp')
 
     def test_setup_correctly(self):

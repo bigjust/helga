@@ -13,20 +13,21 @@ helga
 
 About
 -----
-Helga is a full-featured chat bot for Python 2.7 using `Twisted`_. Helga originally started
+Helga is a full-featured chat bot for Python 3.7+ using `Twisted`_. Helga originally started
 as a python fork of a perl-based IRC bot `olga`_, but has grown considerably since then. Early
-versions limited to support to IRC, but now include other services like XMPP and HipChat.
+versions limited support to IRC, but now include other services like XMPP, HipChat, Slack, and Discord.
 Full documentation can be found at http://helga.readthedocs.org.
+
+**Note:** Version 2.0.0+ requires Python 3.7 or higher. For Python 2.7 support, use version 1.x.
 
 
 Supported Backends
 ------------------
 
-As of version 1.7.0, helga supports IRC, XMPP, and HipChat out of the box. Note, however, that
+Helga supports IRC, XMPP, HipChat, Slack, and Discord out of the box. Note, however, that
 helga originally started as an IRC bot, so much of the terminology will reflect that. The current
-status of XMPP and HipChat support is very limited and somewhat beta. In the future, helga may
-have a much more robust and pluggable backend system to allow connections to any number of chat
-services.
+status of non-IRC support varies by backend. In the future, helga may have a much more robust and
+pluggable backend system to allow connections to any number of chat services.
 
 
 Contributing
@@ -36,6 +37,14 @@ or just bug reports. To report any issues, please create a ticket on `github`_. 
 changes, please note that any pull request will be denied a merge if the test suite fails.
 
 If you are looking to get help with helga, join the #helgabot IRC channel on freenode.
+
+
+Docker
+------
+
+A docker compose file is included, which has a irc server and mongodb instance. Once you bring
+the cluster using `docker-compose up`, you can connect to the irc on localhost port 6667, and
+join the #test channel.
 
 
 License

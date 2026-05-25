@@ -1,8 +1,6 @@
 import time
 import uuid
 
-from collections import defaultdict
-
 from twisted.internet import protocol, reactor, task
 from twisted.words.xish import domish, xpath
 from twisted.words.xish.xmlstream import XmlStreamFactoryMixin
@@ -13,7 +11,6 @@ import smokesignal
 from helga import log, settings
 from helga.comm.base import BaseClient
 from helga.plugins import registry
-from helga.util import encodings
 
 
 logger = log.getLogger(__name__)
@@ -469,7 +466,6 @@ class Client(BaseClient):
         # Update last message
         self.last_message[channel][nick] = message
 
-    @encodings.from_unicode_args
     def msg(self, channel, message):
         """
         Send a message over XMPP to the specified channel. Channels prefixed with '#' are assumed
@@ -497,11 +493,10 @@ class Client(BaseClient):
             'from': self.jid.full(),
             'type': resp_type,
         })
-        element.addElement('body', content=encodings.to_unicode(message))
+        element.addElement('body', content=message)
 
         self.stream.send(element)
 
-    @encodings.from_unicode_args
     def me(self, channel, message):
         """
         Equivalent to: /me message. This is more compatibility with existing IRC plugins
@@ -612,7 +607,6 @@ class Client(BaseClient):
         logger.debug('User %s left channel %s', nick, channel)
         smokesignal.emit('user_left', self, nick, channel)
 
-    @encodings.from_unicode_args
     def join(self, channel, password=None):
         """
         Join a channel, optionally with a passphrase required to join. Channels can either
@@ -647,7 +641,6 @@ class Client(BaseClient):
         self.stream.send(element)
         self.joined(channel)
 
-    @encodings.from_unicode_args
     def leave(self, channel, reason=None):
         """
         Leave a channel, optionally with a reason for leaving

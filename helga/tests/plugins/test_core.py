@@ -23,7 +23,7 @@ from helga.plugins import (Command,
 
 class TestRegistry(object):
 
-    def setup(self):
+    def setup_method(self):
         registry.plugins = {}
         registry.enabled_plugins = defaultdict(set)
 
@@ -48,7 +48,7 @@ class TestRegistry(object):
 
     def _make_mock(self, **attrs):
         m = Mock()
-        for k, v in attrs.iteritems():
+        for k, v in attrs.items():
             setattr(m, k, v)
         return m
 
@@ -65,12 +65,12 @@ class TestRegistry(object):
             self._make_mock(name='baz'),
         ]
 
-        with patch('helga.plugins.pkg_resources') as pkg_resources:
+        with patch('helga.plugins.iter_entry_points') as iter_entry_points:
             with patch('helga.plugins.settings') as settings:
                 settings.ENABLED_PLUGINS = setting
                 settings.DISABLED_PLUGINS = False
 
-                pkg_resources.iter_entry_points.return_value = entry_points
+                iter_entry_points.return_value = entry_points
 
                 with patch.object(Registry, '_Registry__instance', None):
                     reg = Registry()
@@ -89,12 +89,12 @@ class TestRegistry(object):
             self._make_mock(name='baz'),
         ]
 
-        with patch('helga.plugins.pkg_resources') as pkg_resources:
+        with patch('helga.plugins.iter_entry_points') as iter_entry_points:
             with patch('helga.plugins.settings') as settings:
                 settings.ENABLED_PLUGINS = True
                 settings.DISABLED_PLUGINS = setting
 
-                pkg_resources.iter_entry_points.return_value = entry_points
+                iter_entry_points.return_value = entry_points
 
                 with patch.object(Registry, '_Registry__instance', None):
                     reg = Registry()
@@ -115,13 +115,13 @@ class TestRegistry(object):
             self._make_mock(name='baz'),
         ]
 
-        with patch('helga.plugins.pkg_resources') as pkg_resources:
+        with patch('helga.plugins.iter_entry_points') as iter_entry_points:
             with patch('helga.plugins.settings') as settings:
                 settings.ENABLED_PLUGINS = whitelist
                 settings.DISABLED_PLUGINS = blacklist
                 settings.DEFAULT_CHANNEL_PLUGINS = ['foo', 'bar', 'baz']
 
-                pkg_resources.iter_entry_points.return_value = entry_points
+                iter_entry_points.return_value = entry_points
 
                 with patch.object(Registry, '_Registry__instance', None):
                     reg = Registry()
@@ -252,7 +252,7 @@ class TestRegistry(object):
         with patch.object(registry, 'prioritized') as prio:
             prio.return_value = [plugin]
             responses = registry.process('', '', '', '')
-            assert all(map(lambda x: isinstance(x, unicode), responses))
+            assert all(map(lambda x: isinstance(x, str), responses))
 
     def test_process_ignores_exception(self):
         settings.PLUGIN_FIRST_RESPONDER_ONLY = True
@@ -319,9 +319,9 @@ class TestRegistry(object):
         assert self.snowman not in registry.enabled_plugins['#foo']
 
     @patch('helga.plugins.logger')
-    @patch('helga.plugins.pkg_resources')
+    @patch('helga.plugins.iter_entry_points')
     @patch('helga.plugins.smokesignal')
-    def test_load(self, signal, pkg_resources, logger):
+    def test_load(self, signal, iter_entry_points, logger):
         entry_points = [
             Mock(load=lambda: 'foo'),
             Mock(load=lambda: 'snowman'),
@@ -334,7 +334,7 @@ class TestRegistry(object):
         entry_points[2].name = 'bar'
         entry_points[2].load.side_effect = Exception
 
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
 
         with patch.multiple(registry,
                             register=Mock(),
@@ -351,8 +351,8 @@ class TestRegistry(object):
         # Ensure that we sent the signal
         signal.emit.assert_called_with('plugins_loaded')
 
-    @patch('helga.plugins.pkg_resources')
-    def test_load_with_no_whitelist(self, pkg_resources):
+    @patch('helga.plugins.iter_entry_points')
+    def test_load_with_no_whitelist(self, iter_entry_points):
         entry_points = [
             Mock(),
             Mock(),
@@ -367,8 +367,8 @@ class TestRegistry(object):
                 entry_points[2].load.called,
             ])
 
-    @patch('helga.plugins.pkg_resources')
-    def test_load_skips_blacklisted(self, pkg_resources):
+    @patch('helga.plugins.iter_entry_points')
+    def test_load_skips_blacklisted(self, iter_entry_points):
         entry_points = [
             Mock(),
             Mock(),
@@ -382,7 +382,7 @@ class TestRegistry(object):
         whitelist = ['a', 'b', 'c']
         blacklist = ['foo', 'bar', 'baz']
 
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
 
         with patch.multiple(registry, whitelist_plugins=whitelist, blacklist_plugins=blacklist):
             registry.load()
@@ -392,8 +392,8 @@ class TestRegistry(object):
                 entry_points[2].load.called,
             ])
 
-    @patch('helga.plugins.pkg_resources')
-    def test_load_skips_non_whitelist(self, pkg_resources):
+    @patch('helga.plugins.iter_entry_points')
+    def test_load_skips_non_whitelist(self, iter_entry_points):
         entry_points = [
             Mock(),
             Mock(),
@@ -404,7 +404,7 @@ class TestRegistry(object):
         entry_points[1].name = 'bar'
         entry_points[2].name = 'baz'
 
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
 
         whitelist = ['a', 'b', 'c']
 
@@ -420,17 +420,17 @@ class TestRegistry(object):
         assert 'Unknown plugin' in registry.reload('foo')
         assert 'Unknown plugin' in registry.reload(self.snowman)
 
-    @patch('helga.plugins.pkg_resources')
+    @patch('helga.plugins.iter_entry_points')
     @patch('helga.plugins.sys')
-    @patch('__builtin__.reload')
-    def test_reload(self, reloader, sys, pkg_resources):
+    @patch('helga.plugins.reload')
+    def test_reload(self, reloader, sys, iter_entry_points):
         entry_points = [
             Mock(module_name='foo', load=lambda: 'loaded'),
             Mock(module_name='snowman', load=lambda: 'loaded')
         ]
         entry_points[0].name = 'foo'
         entry_points[1].name = self.snowman
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
 
         sys.modules = {
             'foo': entry_points[0],
@@ -444,16 +444,16 @@ class TestRegistry(object):
                 assert registry.reload(name)
                 register.assert_called_with(name, 'loaded')
 
-    @patch('helga.plugins.pkg_resources')
+    @patch('helga.plugins.iter_entry_points')
     @patch('helga.plugins.sys')
-    @patch('__builtin__.reload')
-    def test_reload_returns_false_on_exception(self, reloader, sys, pkg_resources):
+    @patch('helga.plugins.reload')
+    def test_reload_returns_false_on_exception(self, reloader, sys, iter_entry_points):
         module = Mock(module_name='foo')
         module.name = 'foo'
         module.load.side_effect = Exception
 
         entry_points = [module]
-        pkg_resources.iter_entry_points.return_value = entry_points
+        iter_entry_points.return_value = entry_points
         sys.modules = {'foo': module}
         registry.plugins = ['foo']
 
@@ -485,7 +485,7 @@ class TestRegistry(object):
 
 class TestPlugin(object):
 
-    def setup(self):
+    def setup_method(self):
         self.plugin = Plugin()
         self.client = Mock(nickname='helga')
 
@@ -525,7 +525,7 @@ class TestPlugin(object):
 
 class TestCommand(object):
 
-    def setup(self):
+    def setup_method(self):
         self.cmd = Command('foo', aliases=('bar', 'baz'), help='foo cmd')
         self.client = Mock(nickname='helga')
 
@@ -662,7 +662,7 @@ class TestCommand(object):
 
 class TestMatch(object):
 
-    def setup(self):
+    def setup_method(self):
         self.match = Match('foo')
         self.client = Mock()
 
@@ -718,6 +718,7 @@ def test_custom_plugin_priorities(tmpdir):
     settings.configure(str(file))
 
     from helga import plugins
+    from importlib import reload
     reload(plugins)
 
     assert plugins.PRIORITY_LOW == 1

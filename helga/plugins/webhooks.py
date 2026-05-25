@@ -22,8 +22,12 @@ registered, using setuptools entry_points. However, they must belong to the entr
 For more information, see :ref:`webhooks`
 """
 import functools
-import pkg_resources
 import re
+
+try:
+    import pkg_resources
+except ImportError:  # pragma: no cover
+    pkg_resources = None
 
 from twisted.internet import reactor
 from twisted.web import server, resource
@@ -33,10 +37,15 @@ import smokesignal
 
 from helga import log, settings
 from helga.plugins import Command, registry
-from helga.util.encodings import from_unicode
 
 
 logger = log.getLogger(__name__)
+
+
+def iter_entry_points(group):
+    if pkg_resources is not None:
+        return pkg_resources.iter_entry_points(group=group)
+    return ()
 
 
 # Subclassed only for better naming
@@ -74,7 +83,7 @@ class WebhookPlugin(Command):
         self.site = server.Site(self.root)
         self.port = getattr(settings, 'WEBHOOKS_PORT', 8080)
 
-        self.webhook_names = set(ep.name for ep in pkg_resources.iter_entry_points('helga_webhooks'))
+        self.webhook_names = set(ep.name for ep in iter_entry_points('helga_webhooks'))
 
         self.whitelist_webhooks = self._create_webhook_list('ENABLED_WEBHOOKS', default=True)
         self.blacklist_webhooks = self._create_webhook_list('DISABLED_WEBHOOKS', default=True)
@@ -106,7 +115,7 @@ class WebhookPlugin(Command):
             logger.debug('Webhook whitelist was empty, none, or false. Skipping')
             return
 
-        for entry_point in pkg_resources.iter_entry_points(group='helga_webhooks'):
+        for entry_point in iter_entry_points('helga_webhooks'):
             if entry_point.name in self.blacklist_webhooks:
                 logger.info('Skipping blacklisted webhook %s', entry_point.name)
                 continue
@@ -151,7 +160,7 @@ class WebhookPlugin(Command):
         :param nick: the nick of the chat user to message
         """
         client.msg(nick, u'{0}, here are the routes I know about'.format(nick))
-        for pattern, route in self.root.routes.iteritems():
+        for pattern, route in self.root.routes.items():
             http_methods = route[0]  # Route is a tuple (http_methods, function)
             client.msg(nick, u'[{0}] {1}'.format(','.join(http_methods), pattern))
 
@@ -232,7 +241,7 @@ class WebhookRoot(resource.Resource):
         :returns: a string with the HTTP response content
         """
         request.setHeader('Server', 'helga')
-        for pat, route in self.routes.iteritems():
+        for pat, route in self.routes.items():
             match = re.match(pat, request.path)
             if match:
                 break
@@ -249,7 +258,7 @@ class WebhookRoot(resource.Resource):
         # Handle raised HttpErrors
         try:
             # Explicitly return a byte string. Twisted expects this
-            return from_unicode(fn(request, self.chat_client, **match.groupdict()))
+            return fn(request, self.chat_client, **match.groupdict())
         except HttpError as e:
             request.setResponseCode(int(e.status))
             return e.message or e.response

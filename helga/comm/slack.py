@@ -12,6 +12,7 @@ Twisted protocol and communication implementations for Slack.com
 #   Twisted reactor (maybe even create a "txslackclient" library in the distant
 #   future?)
 
+import html
 import json
 import re
 import uuid
@@ -349,7 +350,7 @@ class Client(WebSocketClientProtocol, BaseClient):
     def _get_channel_id(self, name):
         name = name.lstrip('#')
 
-        for chan_id, chan_name in self._channel_names.iteritems():
+        for chan_id, chan_name in self._channel_names.items():
             if chan_name == name:
                 return chan_id
 
@@ -382,7 +383,7 @@ class Client(WebSocketClientProtocol, BaseClient):
         """
         name = name.lstrip('@')
 
-        for user_id, user_name in self._user_names.iteritems():
+        for user_id, user_name in self._user_names.items():
             if user_name == name:
                 return user_id
 
@@ -453,6 +454,9 @@ class Client(WebSocketClientProtocol, BaseClient):
         for full_match, channel_id in re.findall(channel_regex, message):
             channel = self._get_channel_name(channel_id)
             message = message.replace(full_match, '#' + channel)
+
+        # Unescape HTML entities
+        message = html.unescape(message)
 
         return message
 

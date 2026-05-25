@@ -5,7 +5,7 @@ from helga.plugins.webhooks import authenticated, route
 logger = log.getLogger(__name__)
 
 
-@route('/announce/(?P<channel>[\w\-_]+)', methods=['POST'])
+@route(r'/announce/(?P<channel>[\w\-_]+)', methods=['POST'])
 @authenticated
 def announce(request, irc_client, channel):
     """

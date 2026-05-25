@@ -27,7 +27,7 @@ def getLogger(name):
     # Setup the default handler
     if settings.LOG_FILE:
         handler = logging.handlers.RotatingFileHandler(filename=settings.LOG_FILE,
-                                                       maxBytes=50*1024*1024,
+                                                       maxBytes=50 * 1024 * 1024,
                                                        backupCount=6)
     else:
         handler = logging.StreamHandler()
