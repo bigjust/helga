@@ -31,7 +31,7 @@ The modernization effort focuses on:
 [project]
 name = "helga"
 version = "2.0.0"
-requires-python = ">=3.7"
+requires-python = ">=3.8"
 dependencies = [...]
 
 [project.optional-dependencies]
@@ -57,7 +57,7 @@ docs = [...]  # Documentation tools
 
 **Features:**
 
-- Multi-version Python testing (3.7-3.13)
+- Multi-version Python testing (3.8-3.14)
 - Parallel job execution
 - MongoDB service integration
 - Code coverage reporting (Codecov)
@@ -119,7 +119,7 @@ git commit
 ```toml
 [tool.ruff]
 line-length = 100
-target-version = "py37"
+target-version = "py38"
 
 [tool.ruff.lint]
 select = ["E", "W", "F", "I", "B", "C4", "UP", "ARG", "SIM"]
@@ -145,7 +145,7 @@ ruff format helga
 ```toml
 [tool.black]
 line-length = 100
-target-version = ["py37", "py38", "py39", "py310", "py311", "py312"]
+target-version = ["py38", "py39", "py310", "py311", "py312", "py313", "py314"]
 ```
 
 **Usage:**
@@ -164,7 +164,7 @@ black --check helga
 
 ```toml
 [tool.mypy]
-python_version = "3.7"
+python_version = "3.8"
 check_untyped_defs = true
 ignore_missing_imports = true
 ```
@@ -237,11 +237,9 @@ pip install -e .[dev]
 
 ### 7. Python Version Support
 
-**Current Support:** Python 3.7 - 3.13
+**Current Support:** Python 3.8 - 3.14
 
-**Added:** Python 3.13 support in CI/CD
-
-**Consideration:** Python 3.7 reached EOL in June 2023. Future versions may drop 3.7 support to leverage newer language features.
+**Added:** Python 3.14 support in CI/CD
 
 ## Migration Guide
 
@@ -443,7 +441,7 @@ docker system prune -a
 Potential future enhancements:
 
 - [ ] Add type hints to all modules
-- [ ] Migrate to Python 3.10+ (drop 3.7-3.9)
+- [ ] Migrate to Python 3.10+ (drop 3.8-3.9)
 - [ ] Add mutation testing
 - [ ] Implement async/await patterns
 - [ ] Add performance benchmarks
