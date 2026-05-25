@@ -84,6 +84,10 @@ Contents
    webhooks
    builtins
    api
+   ibmcloud_quickstart
+   ibmcloud_deployment
+   modernization
+   phase1_complete
 
 
 Indices and Tables
