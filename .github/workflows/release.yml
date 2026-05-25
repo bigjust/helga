@@ -9,6 +9,9 @@ on:
         description: Version to release (e.g., 2.1.0)
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   build:
     name: Build Distribution
