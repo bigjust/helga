@@ -59,7 +59,7 @@ CHANNEL_LOGGING_DIR = ".logs"
 
 #: A list of channel names (either with or without a '#' prefix) that will be hidden in the
 #: browsable channel log web ui.
-CHANNEL_LOGGING_HIDE_CHANNELS = []
+CHANNEL_LOGGING_HIDE_CHANNELS: list = []
 
 #: The preferred nick of the bot instance. For XMPP clients, this will be used when joining rooms.
 NICK = "helga"
@@ -96,7 +96,7 @@ AUTO_RECONNECT_DELAY = 5
 RATE_LIMIT = None
 
 #: A list of chat nicks that should be considered operators/administrators
-OPERATORS = []
+OPERATORS: list = []
 
 #: A dictionary containing connection info for MongoDB. The minimum settings that should
 #: exist here are 'HOST', the MongoDB host, 'PORT, the MongoDB port, and 'DB' which should be the
@@ -128,7 +128,7 @@ ENABLED_PLUGINS = True
 #: If this value is True, the plugin manager will NOT load any plugin configured with an entry
 #: point. If it is None, or an empty list, no plugins will be blacklisted.
 #: See :ref:`plugins` for more information.
-DISABLED_PLUGINS = []
+DISABLED_PLUGINS: list = []
 
 #: A list of plugin names that should be enabled automatically for any channel. If this value
 #: is True, all plugins installed will be enabled by default. If this value is None, or an empty
@@ -172,7 +172,7 @@ COMMAND_IGNORECASE = False
 WEBHOOKS_PORT = 8080
 
 #: List of two-tuple username and passwords used for http webhook basic authentication
-WEBHOOKS_CREDENTIALS = []  # Tuples of (user, pass)
+WEBHOOKS_CREDENTIALS: list = []  # Tuples of (user, pass)
 
 
 def configure(overrides):

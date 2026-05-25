@@ -28,7 +28,7 @@ import re
 try:
     import pkg_resources
 except ImportError:  # pragma: no cover
-    pkg_resources = None
+    pkg_resources = None  # type: ignore[assignment]
 
 import smokesignal
 from twisted.internet import reactor

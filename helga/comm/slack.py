@@ -98,7 +98,7 @@ class Factory(WebSocketClientFactory):
         reactor.stop()
 
 
-class Client(WebSocketClientProtocol, BaseClient):
+class Client(WebSocketClientProtocol, BaseClient):  # type: ignore[misc]
     def __init__(self, rtm_start_data, *a, **kw):
         BaseClient.__init__(self)
 

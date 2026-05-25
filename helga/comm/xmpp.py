@@ -41,7 +41,7 @@ class Factory(XmlStreamFactoryMixin, protocol.ClientFactory):
         The client instance of :class:`Client`
     """
 
-    protocol = xmlstream.XmlStream
+    protocol = xmlstream.XmlStream  # type: ignore[assignment]
 
     def __init__(self):
         if "JID" in settings.SERVER:

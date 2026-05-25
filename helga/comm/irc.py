@@ -77,7 +77,7 @@ class Client(irc.IRCClient, BaseClient):
     """
 
     #: The preferred IRC nick of the bot instance (setting :data:`~helga.settings.NICK`)
-    nickname = None
+    nickname = None  # type: ignore[assignment]
 
     #: A username should the IRC server require authentication (setting :data:`~helga.settings.SERVER`)
     username = None
@@ -97,7 +97,7 @@ class Client(irc.IRCClient, BaseClient):
 
     #: A backup nick should the preferred :attr:`nickname` be taken. This defaults to a string in the
     #: form of the preferred nick plus the timestamp when the process was started (i.e. helga_12345)
-    erroneousNickFallback = None
+    erroneousNickFallback = None  # type: ignore[assignment]
 
     def __init__(self, factory=None):
         BaseClient.__init__(self)
@@ -107,8 +107,8 @@ class Client(irc.IRCClient, BaseClient):
 
         # These are set here to ensure using properly overridden settings
         self.nickname = settings.NICK
-        self.username = settings.SERVER.get("USERNAME", None)
-        self.password = settings.SERVER.get("PASSWORD", None)
+        self.username = settings.SERVER.get("USERNAME", None)  # type: ignore[assignment]
+        self.password = settings.SERVER.get("PASSWORD", None)  # type: ignore[assignment]
         self.lineRate = getattr(settings, "RATE_LIMIT", None)
         self._use_sasl = settings.SERVER.get("SASL", False)
 

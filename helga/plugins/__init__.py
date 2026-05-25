@@ -8,12 +8,12 @@ from importlib import reload
 try:
     from importlib import metadata as importlib_metadata
 except ImportError:  # pragma: no cover
-    importlib_metadata = None
+    importlib_metadata = None  # type: ignore[assignment]
 
 try:
     import pkg_resources
 except ImportError:  # pragma: no cover
-    pkg_resources = None
+    pkg_resources = None  # type: ignore[assignment]
 import functools
 import random
 import re
@@ -520,7 +520,7 @@ class Command(Plugin):
 
     #: A list of command aliases. If a command 'search' has an alias list ['s'], then
     #: 'helga search foo' and 'helga s foo' will both run the command
-    aliases = []
+    aliases: list = []
 
     #: An optional help string for the command. This is used by the builtin
     #: :ref:`builtin.plugins.help` plugin
