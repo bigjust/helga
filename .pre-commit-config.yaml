@@ -4,45 +4,45 @@
 
 repos:
   # General file checks
-- repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v4.6.0
-  hooks:
-  - id: trailing-whitespace
-    args: [--markdown-linebreak-ext=md]
-  - id: end-of-file-fixer
-  - id: check-yaml
-    args: [--unsafe]      # Allow custom YAML tags
-  - id: check-toml
-  - id: check-json
-  - id: check-added-large-files
-    args: [--maxkb=1000]
-  - id: check-case-conflict
-  - id: check-merge-conflict
-  - id: check-docstring-first
-  - id: debug-statements
-  - id: mixed-line-ending
-    args: [--fix=lf]
-  - id: name-tests-test
-    args: [--pytest-test-first]
-  - id: requirements-txt-fixer
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]      # Allow custom YAML tags
+      - id: check-toml
+      - id: check-json
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-case-conflict
+      - id: check-merge-conflict
+      - id: check-docstring-first
+      - id: debug-statements
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: name-tests-test
+        args: [--pytest-test-first]
+      - id: requirements-txt-fixer
 
   # Python code formatting with Black
-- repo: https://github.com/psf/black
-  rev: 24.8.0
-  hooks:
-  - id: black
-    language_version: python3
-    args: [--line-length=100]
+  - repo: https://github.com/psf/black
+    rev: 24.8.0
+    hooks:
+      - id: black
+        language_version: python3
+        args: [--line-length=100]
 
   # Python linting with Ruff (replaces flake8, isort, and more)
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.6.9
-  hooks:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
+    hooks:
       # Run the linter
-  - id: ruff
-    args: [--fix, --exit-non-zero-on-fix]
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
       # Run the formatter
-  - id: ruff-format
+      - id: ruff-format
 
   # Type checking with mypy (disabled for now - enable gradually)
   # - repo: https://github.com/pre-commit/mirrors-mypy
@@ -85,11 +85,11 @@ repos:
   #     args: [--autofix, --indent, '2']
 
   # Dockerfile linting
-- repo: https://github.com/hadolint/hadolint
-  rev: v2.12.0
-  hooks:
-  - id: hadolint-docker
-    args: [--ignore, DL3008, --ignore, DL3009]
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        args: [--ignore, DL3008, --ignore, DL3009]
 
 # Configuration for specific hooks
 default_language_version:

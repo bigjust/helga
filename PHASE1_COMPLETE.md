@@ -19,7 +19,7 @@ Phase 1 of the Helga modernization has been successfully completed! This phase f
    - Created comprehensive CI workflow (`.github/workflows/ci.yml`)
    - Added release automation workflow (`.github/workflows/release.yml`)
    - Configured Dependabot for automated dependency updates
-   - Added multi-version Python testing (3.7-3.13)
+   - Added multi-version Python testing (3.8-3.13)
    - Integrated MongoDB service for tests
    - Added security scanning (Bandit, Safety)
    - Configured code coverage reporting (Codecov)
@@ -58,7 +58,7 @@ Phase 1 of the Helga modernization has been successfully completed! This phase f
 7. **Python Version Support** ✅
    - Added Python 3.13 support
    - Updated classifiers in metadata
-   - Configured CI to test all versions (3.7-3.13)
+   - Configured CI to test all versions (3.8-3.13)
 
 ## Files Created
 
