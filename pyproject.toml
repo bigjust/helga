@@ -89,7 +89,7 @@ announcements = "helga.webhooks.announcements:announce"
 logger = "helga.webhooks.logger:logger"
 
 [tool.setuptools]
-packages = ["helga"]
+packages = {find = {}}
 
 [tool.setuptools.package-data]
 helga = ["webhooks/logger/*.mustache"]

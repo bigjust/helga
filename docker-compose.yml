@@ -48,7 +48,8 @@ services:
     - HELGA_MONGO_DB=helga
     - HELGA_LOG_LEVEL=DEBUG
     volumes:
-    - ./helga:/app/helga:ro
+    # Note: Removed ./helga mount to avoid shadowing installed package
+    # For development, rebuild the image after code changes
     - helga_logs:/var/log/helga
     - helga_data:/var/lib/helga
     depends_on:
