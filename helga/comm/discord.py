@@ -4,7 +4,11 @@ Discord communication implementation for Helga bot
 
 import contextlib
 
-import discord
+try:
+    import discord
+except ImportError:
+    discord = None  # type: ignore[assignment]
+
 import smokesignal
 from twisted.internet import reactor
 

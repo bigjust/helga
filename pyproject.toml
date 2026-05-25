@@ -48,6 +48,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+discord = [
+    "discord.py>=2.0.0",
+]
 dev = [
     "black>=24.0.0",
     "ruff>=0.6.0",
