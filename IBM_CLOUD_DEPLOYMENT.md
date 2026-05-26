@@ -246,14 +246,14 @@ Consider using the IBM Cloud free tier for testing, but be aware of limitations.
 - [IBM Cloud Documentation](https://cloud.ibm.com/docs)
 - [Cloud Foundry Documentation](https://docs.cloudfoundry.org/)
 - [Helga Documentation](http://helga.readthedocs.org)
-- [Helga GitHub Repository](https://github.com/shaunduncan/helga)
+- [Helga GitHub Repository](https://github.com/bigjust/helga)
 
 ## Support
 
 For issues specific to:
 
 - **IBM Cloud**: <https://cloud.ibm.com/docs/get-support>
-- **Helga Bot**: <https://github.com/shaunduncan/helga/issues>
+- **Helga Bot**: <https://github.com/bigjust/helga/issues>
 - **IRC Help**: Join #helgabot on Freenode
 
 ## Example: Complete Deployment

@@ -40,7 +40,7 @@ Be respectful, inclusive, and professional. We're all here to make Helga better.
 3. Add upstream remote:
 
    ```bash
-   git remote add upstream https://github.com/shaunduncan/helga.git
+   git remote add upstream https://github.com/bigjust/helga.git
    ```
 
 ## Development Setup
