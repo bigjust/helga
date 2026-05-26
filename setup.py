@@ -40,7 +40,7 @@ setup(
     long_description_content_type="text/x-rst",
     author="Shaun Duncan",
     author_email="shaun.duncan@gmail.com",
-    url="https://github.com/shaunduncan/helga",
+    url="https://github.com/bigjust/helga",
     license="MIT OR GPL-3.0-or-later",
     packages=find_packages(),
     package_data={

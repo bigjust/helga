@@ -67,11 +67,11 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/shaunduncan/helga"
+Homepage = "https://github.com/bigjust/helga"
 Documentation = "https://helga.readthedocs.org"
-Repository = "https://github.com/shaunduncan/helga"
-Issues = "https://github.com/shaunduncan/helga/issues"
-Changelog = "https://github.com/shaunduncan/helga/blob/master/CHANGELOG.rst"
+Repository = "https://github.com/bigjust/helga"
+Issues = "https://github.com/bigjust/helga/issues"
+Changelog = "https://github.com/bigjust/helga/blob/master/CHANGELOG.rst"
 
 [project.scripts]
 helga = "helga.bin.helga:main"

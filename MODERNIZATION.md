@@ -326,7 +326,7 @@ pip install -e .[dev]
 
 ```bash
 # Pull from GitHub Container Registry (new)
-docker pull ghcr.io/shaunduncan/helga:latest
+docker pull ghcr.io/bigjust/helga:latest
 
 # Or build locally (unchanged)
 docker-compose up --build
@@ -464,7 +464,7 @@ Potential future enhancements:
 
 ## Questions or Issues?
 
-- Open an issue on GitHub: <https://github.com/shaunduncan/helga/issues>
+- Open an issue on GitHub: <https://github.com/bigjust/helga/issues>
 - Join #helgabot on Freenode IRC
 - Check documentation: <https://helga.readthedocs.org>
 
