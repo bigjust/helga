@@ -86,7 +86,7 @@ Then grab the latest copy of the helga source:
 
 .. code-block:: bash
 
-    $ git clone https://github.com/shaunduncan/helga src/helga
+    $ git clone https://github.com/bigjust/helga src/helga
     $ cd src/helga
     $ python setup.py develop
 
@@ -107,7 +107,7 @@ there is a Vagrantfile for you:
 
 .. code-block:: bash
 
-    $ git clone https://github.com/shaunduncan/helga
+    $ git clone https://github.com/bigjust/helga
     $ cd helga
     $ vagrant up
 

@@ -90,7 +90,7 @@ class Client(irc.IRCClient, BaseClient):
     lineRate = None
 
     #: The URL where the source of the bot is found
-    sourceURL = "http://github.com/shaunduncan/helga"
+    sourceURL = "https://github.com/bigjust/helga"
 
     #: The assumed encoding of IRC messages
     encoding = "UTF-8"

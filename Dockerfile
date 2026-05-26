@@ -82,9 +82,9 @@ CMD ["--settings=/etc/helga_settings.py"]
 # Labels for metadata
 LABEL org.opencontainers.image.title="Helga Chat Bot" \
       org.opencontainers.image.description="A full-featured chat bot for Python 3.7+ with plugin support" \
-      org.opencontainers.image.url="https://github.com/shaunduncan/helga" \
+      org.opencontainers.image.url="https://github.com/bigjust/helga" \
       org.opencontainers.image.documentation="https://helga.readthedocs.org" \
-      org.opencontainers.image.source="https://github.com/shaunduncan/helga" \
+      org.opencontainers.image.source="https://github.com/bigjust/helga" \
       org.opencontainers.image.vendor="Shaun Duncan" \
       org.opencontainers.image.licenses="MIT OR GPL-3.0-or-later"
 
