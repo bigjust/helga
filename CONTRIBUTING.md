@@ -22,7 +22,7 @@ Be respectful, inclusive, and professional. We're all here to make Helga better.
 
 ### Prerequisites
 
-- Python 3.7 or higher
+- Python 3.8 or higher
 - Git
 - Docker and Docker Compose (for local testing)
 - MongoDB (or use Docker)
@@ -40,7 +40,7 @@ Be respectful, inclusive, and professional. We're all here to make Helga better.
 3. Add upstream remote:
 
    ```bash
-   git remote add upstream https://github.com/shaunduncan/helga.git
+   git remote add upstream https://github.com/bigjust/helga.git
    ```
 
 ## Development Setup

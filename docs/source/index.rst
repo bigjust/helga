@@ -5,11 +5,11 @@
 
 helga
 =====
-.. image:: https://img.shields.io/travis/shaunduncan/helga/master.svg
-    :target: https://travis-ci.org/shaunduncan/helga
+.. image:: https://img.shields.io/travis/bigjust/helga/master.svg
+    :target: https://travis-ci.org/bigjust/helga
 
-.. image:: https://img.shields.io/coveralls/shaunduncan/helga/master.svg
-    :target: https://coveralls.io/r/shaunduncan/helga?branch=master
+.. image:: https://img.shields.io/coveralls/bigjust/helga/master.svg
+    :target: https://coveralls.io/r/bigjust/helga?branch=master
 
 .. image:: https://img.shields.io/pypi/v/helga.svg
     :target: https://pypi.python.org/pypi/helga
@@ -94,4 +94,4 @@ Indices and Tables
 
 .. _`Twisted`: https://twistedmatrix.com/trac/
 .. _`olga`: https://github.com/thepeopleseason/olga
-.. _`github`: https://github.com/shaunduncan/helga/issues
+.. _`github`: https://github.com/bigjust/helga/issues

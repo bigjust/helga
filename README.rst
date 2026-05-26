@@ -1,11 +1,11 @@
 helga
 =====
 
-.. image:: https://github.com/shaunduncan/helga/workflows/CI/badge.svg
-    :target: https://github.com/shaunduncan/helga/actions
+.. image:: https://github.com/bigjust/helga/workflows/CI/badge.svg
+    :target: https://github.com/bigjust/helga/actions
 
-.. image:: https://codecov.io/gh/shaunduncan/helga/branch/master/graph/badge.svg
-    :target: https://codecov.io/gh/shaunduncan/helga
+.. image:: https://codecov.io/gh/bigjust/helga/branch/master/graph/badge.svg
+    :target: https://codecov.io/gh/bigjust/helga
 
 .. image:: https://img.shields.io/pypi/v/helga.svg
     :target: https://pypi.python.org/pypi/helga
@@ -19,12 +19,12 @@ helga
 
 About
 -----
-Helga is a full-featured chat bot for Python 3.7+ using `Twisted`_. Helga originally started
+Helga is a full-featured chat bot for Python 3.8+ using `Twisted`_. Helga originally started
 as a python fork of a perl-based IRC bot `olga`_, but has grown considerably since then. Early
 versions limited support to IRC, but now include other services like XMPP, HipChat, Slack, and Discord.
 Full documentation can be found at http://helga.readthedocs.org.
 
-**Note:** Version 2.0.0+ requires Python 3.7 or higher. For Python 2.7 support, use version 1.x.
+**Note:** Version 2.0.0+ requires Python 3.8 or higher. For Python 2.7 support, use version 1.x.
 
 
 Supported Backends
@@ -111,11 +111,11 @@ for details on:
 - Enhanced Docker configuration
 - Automated dependency updates
 
-.. _`GPL`: https://github.com/shaunduncan/helga/blob/master/LICENSE-GPL
-.. _`MIT`: https://github.com/shaunduncan/helga/blob/master/LICENSE-MIT
+.. _`GPL`: https://github.com/bigjust/helga/blob/master/LICENSE-GPL
+.. _`MIT`: https://github.com/bigjust/helga/blob/master/LICENSE-MIT
 .. _`Twisted`: https://twistedmatrix.com/trac/
 .. _`olga`: https://github.com/thepeopleseason/olga
-.. _`github`: https://github.com/shaunduncan/helga/issues
+.. _`github`: https://github.com/bigjust/helga/issues
 .. _`IBM_CLOUD_DEPLOYMENT.md`: IBM_CLOUD_DEPLOYMENT.md
 .. _`CONTRIBUTING.md`: CONTRIBUTING.md
 .. _`MODERNIZATION.md`: MODERNIZATION.md
