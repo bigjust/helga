@@ -37,4 +37,4 @@ sphinx-rtd-theme>=3.1.0
 tox>=4.30.3
 twine>=5.1.0
 types-requests>=2.32.4.20260107
-wheel>=0.44.0
+wheel>=0.47.0
