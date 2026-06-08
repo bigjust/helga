@@ -50,7 +50,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "black>=25.11.0",
-    "ruff>=0.15.15",
+    "ruff>=0.15.16",
     "mypy>=1.19.1",
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
