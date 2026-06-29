@@ -9,7 +9,7 @@ bandit[toml]>=1.8.6
 black>=25.11.0
 
 # Build tools
-build>=1.4.4
+build>=1.5.0
 coverage[toml]>=7.10.7
 freezegun>=1.5.5
 isort>=6.1.0
