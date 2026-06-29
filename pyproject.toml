@@ -59,7 +59,7 @@ dev = [
     "freezegun",
     "mock",
     "pretend",
-    "tox>=4.30.3",
+    "tox>=4.56.1",
 ]
 docs = [
     "sphinx>=7.4.7",
