@@ -55,7 +55,7 @@ dev = [
     "pre-commit>=4.3.0",
     "pytest>=8.4.2",
     "pytest-cov>=7.1.0",
-    "pytest-asyncio>=1.2.0",
+    "pytest-asyncio>=1.4.0",
     "freezegun",
     "mock",
     "pretend",
