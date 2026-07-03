@@ -32,15 +32,15 @@ class Client(LineOnlyReceiver, BaseClient):
     """
 
     delimiter = b"\n"
-    nickname = settings.NICK
 
     def __init__(self):
         BaseClient.__init__(self)
+        self.nickname = settings.NICK
         self.channels.add("#cli")
 
     def connectionMade(self):
         super().connectionMade()
-        self._print(f"{settings.NICK} is ready on #cli. Type /quit to exit.")
+        self._print(f"{self.nickname} is ready on #cli. Type /quit to exit.")
 
     def lineReceived(self, line):
         try:
@@ -68,10 +68,10 @@ class Client(LineOnlyReceiver, BaseClient):
 
     def msg(self, channel, message):
         for line in message.splitlines():
-            self._print(f"<{settings.NICK}> {line}")
+            self._print(f"<{self.nickname}> {line}")
 
     def me(self, channel, message):
-        self._print(f"* {settings.NICK} {message}")
+        self._print(f"* {self.nickname} {message}")
 
     def connectionLost(self, reason):
         if reactor.running:
