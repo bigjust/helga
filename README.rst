@@ -30,10 +30,33 @@ Full documentation can be found at http://helga.readthedocs.org.
 Supported Backends
 ------------------
 
-Helga supports IRC, XMPP, HipChat, Slack, and Discord out of the box. Note, however, that
-helga originally started as an IRC bot, so much of the terminology will reflect that. The current
-status of non-IRC support varies by backend. In the future, helga may have a much more robust and
-pluggable backend system to allow connections to any number of chat services.
+Helga supports IRC, XMPP, HipChat, Slack, Discord, and a local CLI backend out of the box. Note,
+however, that helga originally started as an IRC bot, so much of the terminology will reflect that.
+The current status of non-IRC support varies by backend. In the future, helga may have a much more
+robust and pluggable backend system to allow connections to any number of chat services.
+
+Local CLI Backend
+^^^^^^^^^^^^^^^^^
+For local development or testing without a chat server, helga can use a stdio-based CLI backend.
+Messages are read from stdin and responses are written to stdout as if they were sent in the
+``#cli`` channel.
+
+To use it, set ``SERVER['TYPE']`` to ``'cli'`` in your settings file::
+
+    SERVER = {
+        'TYPE': 'cli',
+    }
+
+Run helga and type commands directly::
+
+    $ helga --settings cli_settings.py
+    helga is ready on #cli. Type /quit to exit.
+    helga help
+    ...
+    /quit
+
+Set ``LOG_LEVEL = 'WARNING'`` (or use ``LOG_FILE``) to keep log output from interleaving with the
+chat output.
 
 
 Contributing

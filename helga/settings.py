@@ -21,9 +21,10 @@ import sys
 #:
 #: Additional, optional keys are supported for different chat backends:
 #:
-#: - ``TYPE``: the backend type to use, 'irc' or 'xmpp'
+#: - ``TYPE``: the backend type to use, 'irc', 'xmpp', or 'cli'
 #: - ``MUC_HOST``: the MUC group chat domain like 'conference.example.com' for group chat
 #: - ``JID``: A full jabber ID to use instead of USERNAME (xmpp only)
+#: - ``API_KEY``: the Slack bot API key (slack only)
 SERVER = {
     "HOST": "localhost",
     "PORT": 6667,

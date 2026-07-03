@@ -176,6 +176,34 @@ configuration. Similarly, Slack uses the "@ mentions" syntax for addressing
 nicks, and the connector has support for this, so you should not set
 :data:`~helga.settings.COMMAND_PREFIX_BOTNICK` in your configuration.
 
+
+.. _config.cli:
+
+CLI Backend
+^^^^^^^^^^^
+For local development or testing without a chat server, helga includes a stdio-based
+CLI backend. Messages are read from stdin and responses are written to stdout as if they
+were sent in the ``#cli`` channel from the nick ``me``.
+
+To enable the CLI backend, set ``TYPE`` to ``'cli'`` in your ``SERVER`` settings. No other
+connection settings are required::
+
+    SERVER = {
+        'TYPE': 'cli',
+    }
+
+Run helga and type commands directly::
+
+    $ helga --settings=cli_settings.py
+    helga is ready on #cli. Type /quit to exit.
+    helga help
+    <helga> me, here are the plugins I know about
+    ...
+    /quit
+
+Because helga logs to stdout by default, you may want to set ``LOG_LEVEL = 'WARNING'``
+or use ``LOG_FILE`` in your settings to keep log lines from interleaving with chat output.
+
 .. _`HipChat`: https://www.hipchat.com/
 .. _`HipChat XMPP Settings`: https://hipchat.com/account/xmpp
 .. _`hipchat_nicks`: https://github.com/shaunduncan/helga-hipchat-nicks

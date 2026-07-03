@@ -5,6 +5,22 @@ from helga.bin import helga
 
 
 class TestRun:
+    def test_cli(self):
+        server = {"TYPE": "cli"}
+
+        with patch.multiple(
+            helga, smokesignal=Mock(), _get_backend=Mock(), reactor=Mock(), stdio=Mock()
+        ), patch.object(helga.settings, "SERVER", server):
+            factory = Mock()
+            helga._get_backend.return_value = helga._get_backend
+            helga._get_backend.Factory.return_value = factory
+
+            helga.run()
+
+            helga.smokesignal.emit.assert_called_with("started")
+            helga.stdio.StandardIO.assert_called_with(factory.client)
+            assert helga.reactor.run.called
+
     def test_tcp(self):
         server = {
             "HOST": "localhost",
