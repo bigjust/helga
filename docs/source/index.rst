@@ -32,11 +32,11 @@ versions limited to support to IRC, but now include other services like XMPP and
 Supported Backends
 ------------------
 
-As of version 1.7.0, helga supports IRC, XMPP, and HipChat out of the box. Note, however, that
-helga originally started as an IRC bot, so much of the terminology will reflect that. The current
-status of XMPP and HipChat support is very limited and somewhat beta. In the future, helga may
-have a much more robust and pluggable backend system to allow connections to any number of chat
-services.
+As of version 1.7.0, helga supports IRC, XMPP, and HipChat out of the box. The local CLI backend
+is also available for development and testing without a chat server. Note, however, that helga
+originally started as an IRC bot, so much of the terminology will reflect that. The current status
+of non-IRC support varies by backend. In the future, helga may have a much more robust and pluggable
+backend system to allow connections to any number of chat services.
 
 
 .. _features:

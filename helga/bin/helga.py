@@ -3,7 +3,7 @@ import os
 
 import smokesignal
 from autobahn.twisted.websocket import connectWS
-from twisted.internet import reactor, ssl
+from twisted.internet import reactor, ssl, stdio
 
 from helga import settings
 
@@ -23,7 +23,9 @@ def run():
 
     factory = backend.Factory()
 
-    if settings.SERVER.get("TYPE", False) == "slack":
+    if settings.SERVER.get("TYPE", False) == "cli":
+        stdio.StandardIO(factory.client)
+    elif settings.SERVER.get("TYPE", False) == "slack":
         connectWS(factory=factory)
     elif settings.SERVER.get("SSL", False):
         reactor.connectSSL(
