@@ -14,6 +14,7 @@
 """
 
 import warnings
+from urllib.parse import quote_plus
 
 from pymongo import MongoClient
 from pymongo.errors import ConnectionFailure
@@ -31,18 +32,24 @@ def connect():
     """
     db_settings = getattr(settings, "DATABASE", {})
 
+    host = db_settings["HOST"]
+    port = db_settings["PORT"]
+    db_name = db_settings["DB"]
+
+    if "USERNAME" in db_settings and "PASSWORD" in db_settings:
+        username = quote_plus(db_settings["USERNAME"])
+        password = quote_plus(db_settings["PASSWORD"])
+        uri = f"mongodb://{username}:{password}@{host}:{port}/{db_name}?authSource={db_name}"
+    else:
+        uri = f"mongodb://{host}:{port}/{db_name}"
+
     try:
-        client = MongoClient(db_settings["HOST"], db_settings["PORT"])
+        client = MongoClient(uri)
     except ConnectionFailure:
         warnings.warn("MongoDB is not available. Some features may not work", stacklevel=2)
         return None, None
     else:
-        db = client[db_settings["DB"]]
-
-        if "USERNAME" in db_settings and "PASSWORD" in db_settings:
-            db.authenticate(db_settings["USERNAME"], db_settings["PASSWORD"])
-
-        return client, db
+        return client, client[db_name]
 
 
 client, db = connect()

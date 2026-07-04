@@ -11,6 +11,7 @@ def test_connect_returns_none_on_failure(settings, mongo):
     settings.DATABASE = {
         "HOST": "localhost",
         "PORT": "1234",
+        "DB": "baz",
     }
 
     mongo.side_effect = ConnectionFailure
@@ -35,7 +36,26 @@ def test_connect_authenticates(settings, mongo):
     mongo.__getitem__.return_value = database
 
     db.connect()
-    database.authenticate.assert_called_with("foo", "bar")
+    mongo.assert_called_with("mongodb://foo:bar@localhost:1234/baz?authSource=baz")
+
+
+@patch("helga.db.MongoClient")
+@patch("helga.db.settings")
+def test_connect_url_encodes_credentials(settings, mongo):
+    settings.DATABASE = {
+        "HOST": "localhost",
+        "PORT": "1234",
+        "USERNAME": "foo@domain",
+        "PASSWORD": "bar/baz",
+        "DB": "qux",
+    }
+
+    mongo.return_value = mongo
+    mongo.__getitem__ = Mock()
+    mongo.__getitem__.return_value = Mock()
+
+    db.connect()
+    mongo.assert_called_with("mongodb://foo%40domain:bar%2Fbaz@localhost:1234/qux?authSource=qux")
 
 
 @patch("helga.db.MongoClient")
@@ -54,4 +74,5 @@ def test_connect(settings, mongo):
     mongo.__getitem__.return_value = database
 
     assert db.connect() == (mongo, database)
+    mongo.assert_called_with("mongodb://localhost:1234/baz")
     mongo.__getitem__.assert_called_with("baz")
