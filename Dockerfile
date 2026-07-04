@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     libssl-dev \
     libffi-dev \
+    libpq-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Create virtual environment
@@ -47,6 +48,7 @@ ENV PYTHONUNBUFFERED=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl3 \
     libffi8 \
+    libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user

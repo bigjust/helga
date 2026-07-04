@@ -13,9 +13,11 @@ CHANNELS = [
 ]
 
 DATABASE = {
-    "HOST": os.environ.get("HELGA_MONGO_HOST", "mongo"),
-    "PORT": 27017,
-    "DB": os.environ.get("HELGA_MONGO_DB", "helga"),
+    "HOST": os.environ.get("HELGA_DATABASE_HOST", "postgres"),
+    "PORT": int(os.environ.get("HELGA_DATABASE_PORT", "5432")),
+    "DB": os.environ.get("HELGA_DATABASE_DB", "helga"),
+    "USERNAME": os.environ.get("HELGA_DATABASE_USERNAME", "helga"),
+    "PASSWORD": os.environ.get("HELGA_DATABASE_PASSWORD", "helga"),
 }
 
 # Made with Bob
