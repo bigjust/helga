@@ -3,6 +3,7 @@ Default settings and configuration utilities
 """
 
 import os
+import runpy
 import sys
 
 #: Dictionary of connection details. At a minimum this should contain keys
@@ -189,8 +190,10 @@ def configure(overrides):
 
     # Filesystem path to settings file
     if os.path.isfile(overrides):
-        with open(overrides) as override_file:
-            exec(override_file.read(), this.__dict__)
+        result = runpy.run_path(overrides)
+        for attr in result:
+            if not attr.startswith("_"):
+                setattr(this, attr, result[attr])
         return
 
     # Module import path settings file
