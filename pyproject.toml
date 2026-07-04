@@ -34,7 +34,7 @@ classifiers = [
 dependencies = [
     "autobahn",
     "cffi",
-    "pymongo",
+    "psycopg2-binary",
     "pyOpenSSL",
     "pystache",
     "smokesignal",
