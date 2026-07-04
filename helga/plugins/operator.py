@@ -1,6 +1,9 @@
+import os
 import random
+import sys
 
 import smokesignal
+from twisted.internet import reactor
 
 from helga import log
 from helga.db import add_autojoin, get_autojoin_channels, get_connection, remove_autojoin
@@ -28,6 +31,12 @@ def join_autojoined_channels(client):
             client.join(channel)
         except Exception:  # pragma: no cover
             logger.exception("Could not autojoin %s", channel)
+
+
+@smokesignal.on("join")
+def list_operators_on_join(client, channel):
+    if client.operators:
+        client.msg(channel, f"Operators: {', '.join(sorted(client.operators))}")
 
 
 def do_add_autojoin(channel):
@@ -58,7 +67,7 @@ def reload_plugin(plugin):
     "operator",
     aliases=["oper", "op"],
     help="Admin like control over helga. Must be an operator to use. "
-    "Usage: helga (operator|oper|op) (reload <plugin>|"
+    "Usage: helga (operator|oper|op) (reload <plugin>|restart|quit|"
     "(join|leave|autojoin (add|remove)) <channel>)",
 )
 def operator(client, channel, nick, message, cmd, args):
@@ -71,7 +80,7 @@ def operator(client, channel, nick, message, cmd, args):
 
     if not args:
         return (
-            "Usage: helga (operator|oper|op) (reload <plugin>|"
+            "Usage: helga (operator|oper|op) (reload <plugin>|restart|quit|"
             "(join|leave|autojoin (add|remove)) <channel>)"
         )
 
@@ -95,4 +104,14 @@ def operator(client, channel, nick, message, cmd, args):
 
     # Reload a plugin without restarting
     elif subcmd == "reload":
+        if len(args) < 2:
+            return "Usage: helga operator reload <plugin>"
         return reload_plugin(args[1])
+
+    elif subcmd == "restart":
+        reactor.callLater(1, os.execv, sys.executable, [sys.executable] + sys.argv)
+        return "Restarting..."
+
+    elif subcmd == "quit":
+        reactor.callLater(1, reactor.stop)
+        return "Shutting down..."

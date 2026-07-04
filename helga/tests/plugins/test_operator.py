@@ -66,6 +66,7 @@ def test_operator_handles_subcmd(do_add_autojoin, do_remove_autojoin, reload_plu
     client.msg.assert_called_with("#other_chan", "unicode snowman ☃")
 
     assert operator.operator(*(args + [["reload", "foo"]])) == "reload_plugin"
+    assert operator.operator(*(args + [["reload"]])) == "Usage: helga operator reload <plugin>"
 
 
 @patch("helga.plugins.operator.add_autojoin")
@@ -97,6 +98,18 @@ def test_join_autojoined_channels(get_autojoin_channels, get_connection):
     assert client.join.call_args_list == [call("#bots"), call("☃")]
 
 
+def test_list_operators_on_join_announces_operators():
+    client = Mock(operators={"alice", "bob"})
+    operator.list_operators_on_join(client, "#bots")
+    client.msg.assert_called_once_with("#bots", "Operators: alice, bob")
+
+
+def test_list_operators_on_join_skips_when_no_operators():
+    client = Mock(operators=set())
+    operator.list_operators_on_join(client, "#bots")
+    assert not client.msg.called
+
+
 @patch("helga.plugins.operator.registry")
 def test_reload_plugin(plugins):
     plugins.reload.return_value = True
@@ -114,3 +127,22 @@ def test_reload_plugin_handles_unicode(plugins):
 
     plugins.reload.return_value = False
     assert f"Failed to reload plugin '{snowman}'" == operator.reload_plugin(snowman)
+
+
+@patch("helga.plugins.operator.reactor")
+@patch("helga.plugins.operator.os")
+def test_operator_restart(mock_os, mock_reactor):
+    client = Mock(operators=["me"])
+    result = operator.operator(client, "#bots", "me", "message", "operator", ["restart"])
+    assert result == "Restarting..."
+    mock_reactor.callLater.assert_called_once()
+    assert mock_reactor.callLater.call_args[0][0] == 1
+    assert mock_reactor.callLater.call_args[0][1] is mock_os.execv
+
+
+@patch("helga.plugins.operator.reactor")
+def test_operator_quit(mock_reactor):
+    client = Mock(operators=["me"])
+    result = operator.operator(client, "#bots", "me", "message", "operator", ["quit"])
+    assert result == "Shutting down..."
+    mock_reactor.callLater.assert_called_once_with(1, mock_reactor.stop)
