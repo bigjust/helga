@@ -1,78 +1,155 @@
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
-from pymongo.errors import ConnectionFailure
+import psycopg2
 
 from helga import db
 
 
-@patch("helga.db.MongoClient")
+def _make_conn():
+    """Return a mock psycopg2 connection that supports the cursor context manager."""
+    conn = MagicMock()
+    cur = MagicMock()
+    conn.cursor.return_value.__enter__ = Mock(return_value=cur)
+    conn.cursor.return_value.__exit__ = Mock(return_value=False)
+    return conn, cur
+
+
+@patch("helga.db.psycopg2.connect")
 @patch("helga.db.settings")
-def test_connect_returns_none_on_failure(settings, mongo):
+def test_connect_returns_none_on_failure(settings, connect):
     settings.DATABASE = {
         "HOST": "localhost",
         "PORT": "1234",
         "DB": "baz",
+        "USERNAME": "user",
     }
 
-    mongo.side_effect = ConnectionFailure
-    assert db.connect() == (None, None)
+    connect.side_effect = psycopg2.OperationalError
+    assert db.connect() is None
 
 
-@patch("helga.db.MongoClient")
+@patch("helga.db.psycopg2.connect")
 @patch("helga.db.settings")
-def test_connect_authenticates(settings, mongo):
-    settings.DATABASE = {
-        "HOST": "localhost",
-        "PORT": "1234",
-        "USERNAME": "foo",
-        "PASSWORD": "bar",
-        "DB": "baz",
-    }
-
-    mongo.return_value = mongo
-
-    database = Mock()
-    mongo.__getitem__ = Mock()
-    mongo.__getitem__.return_value = database
-
-    db.connect()
-    mongo.assert_called_with("mongodb://foo:bar@localhost:1234/baz?authSource=baz")
-
-
-@patch("helga.db.MongoClient")
-@patch("helga.db.settings")
-def test_connect_url_encodes_credentials(settings, mongo):
-    settings.DATABASE = {
-        "HOST": "localhost",
-        "PORT": "1234",
-        "USERNAME": "foo@domain",
-        "PASSWORD": "bar/baz",
-        "DB": "qux",
-    }
-
-    mongo.return_value = mongo
-    mongo.__getitem__ = Mock()
-    mongo.__getitem__.return_value = Mock()
-
-    db.connect()
-    mongo.assert_called_with("mongodb://foo%40domain:bar%2Fbaz@localhost:1234/qux?authSource=qux")
-
-
-@patch("helga.db.MongoClient")
-@patch("helga.db.settings")
-def test_connect(settings, mongo):
+def test_connect_returns_connection(settings, connect):
     settings.DATABASE = {
         "HOST": "localhost",
         "PORT": "1234",
         "DB": "baz",
+        "USERNAME": "user",
+        "PASSWORD": "pass",
     }
 
-    mongo.return_value = mongo
+    conn, _ = _make_conn()
+    connect.return_value = conn
 
-    database = Mock()
-    mongo.__getitem__ = Mock()
-    mongo.__getitem__.return_value = database
+    assert db.connect() is conn
+    connect.assert_called_once()
+    call_kwargs = connect.call_args.kwargs
+    assert call_kwargs["host"] == "localhost"
+    assert call_kwargs["port"] == "1234"
+    assert call_kwargs["dbname"] == "baz"
+    assert call_kwargs["user"] == "user"
+    assert call_kwargs["password"] == "pass"
 
-    assert db.connect() == (mongo, database)
-    mongo.assert_called_with("mongodb://localhost:1234/baz")
-    mongo.__getitem__.assert_called_with("baz")
+
+@patch("helga.db.get_connection")
+def test_get_autojoin_channels(get_connection):
+    conn, cur = _make_conn()
+    get_connection.return_value = conn
+    cur.fetchall.return_value = [{"channel": "#foo"}, {"channel": "#bar"}]
+
+    assert db.get_autojoin_channels() == ["#foo", "#bar"]
+
+
+@patch("helga.db.get_connection")
+def test_get_autojoin_channels_no_connection(get_connection):
+    get_connection.return_value = None
+    assert db.get_autojoin_channels() == []
+
+
+@patch("helga.db.get_connection")
+def test_add_autojoin_new(get_connection):
+    conn, cur = _make_conn()
+    get_connection.return_value = conn
+    cur.rowcount = 1
+
+    assert db.add_autojoin("#foo") is True
+    conn.commit.assert_called()
+
+
+@patch("helga.db.get_connection")
+def test_add_autojoin_existing(get_connection):
+    conn, cur = _make_conn()
+    get_connection.return_value = conn
+    cur.rowcount = 0
+
+    assert db.add_autojoin("#foo") is False
+
+
+@patch("helga.db.get_connection")
+def test_remove_autojoin(get_connection):
+    conn, _ = _make_conn()
+    get_connection.return_value = conn
+    db.remove_autojoin("#foo")
+    conn.commit.assert_called()
+
+
+@patch("helga.db.get_connection")
+def test_get_auto_enabled_plugins(get_connection):
+    conn, cur = _make_conn()
+    get_connection.return_value = conn
+    cur.fetchall.return_value = [
+        {"plugin": "foo", "channels": ["#a", "#b"]},
+    ]
+
+    assert db.get_auto_enabled_plugins() == [{"plugin": "foo", "channels": ["#a", "#b"]}]
+
+
+@patch("helga.db.get_connection")
+def test_get_auto_enabled_plugin(get_connection):
+    conn, cur = _make_conn()
+    get_connection.return_value = conn
+    cur.fetchone.return_value = {"plugin": "foo", "channels": ["#a"]}
+
+    assert db.get_auto_enabled_plugin("foo") == {"plugin": "foo", "channels": ["#a"]}
+
+
+@patch("helga.db.get_connection")
+def test_get_auto_enabled_plugin_missing(get_connection):
+    conn, cur = _make_conn()
+    get_connection.return_value = conn
+    cur.fetchone.return_value = None
+
+    assert db.get_auto_enabled_plugin("foo") is None
+
+
+@patch("helga.db.get_connection")
+def test_set_auto_enabled_channels(get_connection):
+    conn, _ = _make_conn()
+    get_connection.return_value = conn
+    db.set_auto_enabled_channels("foo", ["#a", "#b"])
+    conn.commit.assert_called()
+
+
+@patch("helga.db.get_auto_enabled_plugin")
+@patch("helga.db.set_auto_enabled_channels")
+def test_add_auto_enabled_channel_new(set_channels, get_plugin):
+    get_plugin.return_value = None
+    db.add_auto_enabled_channel("foo", "#bots")
+    set_channels.assert_called_with("foo", ["#bots"])
+
+
+@patch("helga.db.get_auto_enabled_plugin")
+@patch("helga.db.set_auto_enabled_channels")
+def test_add_auto_enabled_channel_existing(set_channels, get_plugin):
+    get_plugin.return_value = {"plugin": "foo", "channels": ["#bots"]}
+    db.add_auto_enabled_channel("foo", "#bots")
+    set_channels.assert_not_called()
+
+
+@patch("helga.db.get_auto_enabled_plugin")
+@patch("helga.db.set_auto_enabled_channels")
+def test_remove_auto_enabled_channel(set_channels, get_plugin):
+    get_plugin.return_value = {"plugin": "foo", "channels": ["#bots", "#other"]}
+    db.remove_auto_enabled_channel("foo", "#bots")
+    set_channels.assert_called_with("foo", ["#other"])

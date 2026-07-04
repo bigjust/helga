@@ -100,22 +100,24 @@ RATE_LIMIT = None
 #: A list of chat nicks that should be considered operators/administrators
 OPERATORS: list = []
 
-#: A dictionary containing connection info for MongoDB. The minimum settings that should
-#: exist here are 'HOST', the MongoDB host, 'PORT, the MongoDB port, and 'DB' which should be the
-#: MongoDB collection to use. These values default to 'localhost', 27017, and 'helga' respectively.
-#: Both 'USERNAME' and 'PASSWORD' can be specified if MongoDB requires authentication. For example::
+#: A dictionary containing connection info for PostgreSQL. The minimum settings that should
+#: exist here are 'HOST', the PostgreSQL host, 'PORT', the PostgreSQL port, and 'DB' which should
+#: be the PostgreSQL database to use. These values default to 'localhost', 5432, and 'helga'
+#: respectively. Both 'USERNAME' and 'PASSWORD' can be specified if PostgreSQL requires
+#: authentication. For example::
 #:
 #:     DATABASE = {
 #:         'HOST': 'localhost',
-#:         'PORT': 27017,
+#:         'PORT': 5432,
 #:         'DB': 'helga',
-#:         'USERNAME': 'foo',
+#:         'USERNAME': 'helga',
 #:         'PASSWORD': 'bar',
 #:     }
 DATABASE = {
     "HOST": "localhost",
-    "PORT": 27017,
+    "PORT": 5432,
     "DB": "helga",
+    "USERNAME": "helga",
 }
 
 #: A list of plugin names that should be loaded by the plugin manager. This effectively serves

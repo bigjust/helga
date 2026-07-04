@@ -3,7 +3,12 @@ import random
 import smokesignal
 
 from helga import log
-from helga.db import db
+from helga.db import (
+    add_auto_enabled_channel,
+    get_auto_enabled_plugins,
+    get_connection,
+    remove_auto_enabled_channel,
+)
 from helga.plugins import ACKS, command, registry
 
 logger = log.getLogger(__name__)
@@ -11,14 +16,14 @@ logger = log.getLogger(__name__)
 
 @smokesignal.on("signon")
 def auto_enable_plugins(*args):
-    if db is None:  # pragma: no cover
+    if get_connection() is None:  # pragma: no cover
         logger.warning("Cannot auto enable plugins. No database connection")
         return
 
     def pred(rec):
         return rec["plugin"] in registry.all_plugins
 
-    for rec in filter(pred, db.auto_enabled_plugins.find()):
+    for rec in filter(pred, get_auto_enabled_plugins()):
         for channel in rec["channels"]:
             logger.info("Auto-enabling plugin %s on channel %s", rec["plugin"], channel)
             registry.enable(channel, rec["plugin"])
@@ -46,12 +51,7 @@ def enable_plugins(client, channel, *plugins):
     registry.enable(channel, *valid_plugins)
 
     for p in valid_plugins:
-        rec = db.auto_enabled_plugins.find_one({"plugin": p})
-        if rec is None:
-            db.auto_enabled_plugins.insert({"plugin": p, "channels": [channel]})
-        elif channel not in rec["channels"]:
-            rec["channels"].append(channel)
-            db.auto_enabled_plugins.save(rec)
+        add_auto_enabled_channel(p, channel)
 
     return random.choice(ACKS)
 
@@ -64,12 +64,7 @@ def disable_plugins(client, channel, *plugins):
     registry.disable(channel, *valid_plugins)
 
     for p in valid_plugins:
-        rec = db.auto_enabled_plugins.find_one({"plugin": p})
-        if rec is None or channel not in rec["channels"]:
-            continue
-
-        rec["channels"].remove(channel)
-        db.auto_enabled_plugins.save(rec)
+        remove_auto_enabled_channel(p, channel)
 
     return random.choice(ACKS)
 

@@ -41,11 +41,11 @@ def test_operator_leave_ignores_invalid_channel():
 
 
 @patch("helga.plugins.operator.reload_plugin")
-@patch("helga.plugins.operator.remove_autojoin")
-@patch("helga.plugins.operator.add_autojoin")
-def test_operator_handles_subcmd(add_autojoin, remove_autojoin, reload_plugin):
-    add_autojoin.return_value = "add_autojoin"
-    remove_autojoin.return_value = "remove_autojoin"
+@patch("helga.plugins.operator.do_remove_autojoin")
+@patch("helga.plugins.operator.do_add_autojoin")
+def test_operator_handles_subcmd(do_add_autojoin, do_remove_autojoin, reload_plugin):
+    do_add_autojoin.return_value = "add_autojoin"
+    do_remove_autojoin.return_value = "remove_autojoin"
     reload_plugin.return_value = "reload_plugin"
 
     client = Mock(operators=["me"])
@@ -68,34 +68,31 @@ def test_operator_handles_subcmd(add_autojoin, remove_autojoin, reload_plugin):
     assert operator.operator(*(args + [["reload", "foo"]])) == "reload_plugin"
 
 
-@patch("helga.plugins.operator.db")
-def test_add_autojoin_exists(db):
-    db.autojoin.find.return_value = db
-    db.count.return_value = 1
-    assert operator.add_autojoin("#foo") not in ACKS
+@patch("helga.plugins.operator.add_autojoin")
+def test_do_add_autojoin_exists(add_autojoin):
+    add_autojoin.return_value = False
+    assert operator.do_add_autojoin("#foo") not in ACKS
 
 
-@patch("helga.plugins.operator.db")
-def test_add_autojoin_adds(db):
-    db.autojoin.find.return_value = db
-    db.count.return_value = 0
-    operator.add_autojoin("foo")
-    db.autojoin.insert.assert_called_with({"channel": "foo"})
+@patch("helga.plugins.operator.add_autojoin")
+def test_do_add_autojoin_adds(add_autojoin):
+    add_autojoin.return_value = True
+    assert operator.do_add_autojoin("foo") in ACKS
+    add_autojoin.assert_called_with("foo")
 
 
-@patch("helga.plugins.operator.db")
-def test_remove_autojoin(db):
-    operator.remove_autojoin("foo")
-    db.autojoin.remove.assert_called_with({"channel": "foo"})
+@patch("helga.plugins.operator.remove_autojoin")
+def test_do_remove_autojoin(remove_autojoin):
+    assert operator.do_remove_autojoin("foo") in ACKS
+    remove_autojoin.assert_called_with("foo")
 
 
-@patch("helga.plugins.operator.db")
-def test_join_autojoined_channels(db):
+@patch("helga.plugins.operator.get_connection")
+@patch("helga.plugins.operator.get_autojoin_channels")
+def test_join_autojoined_channels(get_autojoin_channels, get_connection):
     client = Mock()
-    db.autojoin.find.return_value = [
-        {"channel": "#bots"},
-        {"channel": "☃"},
-    ]
+    get_connection.return_value = Mock()
+    get_autojoin_channels.return_value = ["#bots", "☃"]
     operator.join_autojoined_channels(client)
     assert client.join.call_args_list == [call("#bots"), call("☃")]
 

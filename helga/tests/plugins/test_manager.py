@@ -3,12 +3,14 @@ from unittest.mock import Mock, call, patch
 from helga.plugins import manager
 
 
-@patch("helga.plugins.manager.db")
+@patch("helga.plugins.manager.get_connection")
+@patch("helga.plugins.manager.get_auto_enabled_plugins")
 @patch("helga.plugins.manager.registry")
-def test_auto_enable_plugins(plugins, db):
+def test_auto_enable_plugins(plugins, get_auto_enabled_plugins, get_connection):
     client = Mock()
+    get_connection.return_value = Mock()
     rec = {"plugin": "haiku", "channels": ["a", "b", "c"]}
-    db.auto_enabled_plugins.find.return_value = [rec]
+    get_auto_enabled_plugins.return_value = [rec]
     plugins.all_plugins = ["haiku"]
 
     manager.auto_enable_plugins(client)
@@ -44,32 +46,16 @@ def test_list_plugins_handles_unicode(plugins):
     assert f"Available plugins: {snowman}" in resp
 
 
-@patch("helga.plugins.manager.db")
+@patch("helga.plugins.manager.add_auto_enabled_channel")
 @patch("helga.plugins.manager.registry")
-def test_enable_plugins_inits_record(plugins, db):
+def test_enable_plugins(plugins, add_auto_enabled_channel):
     client = Mock()
 
     plugins.all_plugins = ["foobar"]
 
-    db.auto_enabled_plugins.find_one.return_value = None
     manager.enable_plugins(client, "#bots", "foobar")
 
-    assert db.auto_enabled_plugins.insert.called
-
-
-@patch("helga.plugins.manager.db")
-@patch("helga.plugins.manager.registry")
-def test_enable_plugins_updates_record(plugins, db):
-    client = Mock()
-
-    plugins.all_plugins = ["foobar"]
-
-    rec = {"plugin": "foobar", "channels": ["#all"]}
-    db.auto_enabled_plugins.find_one.return_value = rec
-    manager.enable_plugins(client, "#bots", "foobar")
-
-    assert db.auto_enabled_plugins.save.called
-    assert "#bots" in rec["channels"]
+    add_auto_enabled_channel.assert_called_with("foobar", "#bots")
 
 
 @patch("helga.plugins.manager._filter_valid")
@@ -83,32 +69,22 @@ def test_enable_plugins_no_plugins(filter_valid):
     assert resp == expect
 
 
+@patch("helga.plugins.manager.remove_auto_enabled_channel")
 @patch("helga.plugins.manager._filter_valid")
-@patch("helga.plugins.manager.db")
 @patch("helga.plugins.manager.registry")
-def test_disable_plugins(plugins, db, filter_valid):
+def test_disable_plugins(plugins, filter_valid, remove_auto_enabled_channel):
     client = Mock()
     plugins.all_plugins = ["foobar", "blah", "no_record"]
     filter_valid.return_value = plugins.all_plugins
 
-    records = [
-        {
-            # This will be removed
-            "plugin": "foobar",
-            "channels": ["#all", "#bots"],
-        },
-        {
-            # Not enabled for the channel
-            "plugin": "blah",
-            "channels": ["#other"],
-        },
-        None,  # No plugin found
-    ]
-
-    db.auto_enabled_plugins.find_one.side_effect = records
     manager.disable_plugins(client, "#bots", *plugins.all_plugins)
-    db.auto_enabled_plugins.save.assert_called_with(records[0])
-    assert "#bots" not in records[0]["channels"]
+    remove_auto_enabled_channel.assert_has_calls(
+        [
+            call("foobar", "#bots"),
+            call("blah", "#bots"),
+            call("no_record", "#bots"),
+        ]
+    )
 
 
 @patch("helga.plugins.manager._filter_valid")
