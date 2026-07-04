@@ -98,6 +98,12 @@ def test_join_autojoined_channels(get_autojoin_channels, get_connection):
     assert client.join.call_args_list == [call("#bots"), call("☃")]
 
 
+def test_list_operators_on_join():
+    client = Mock(operators={"delta", "alpha"})
+    operator.list_operators_on_join(client, "#bots")
+    client.msg.assert_called_once_with("#bots", "Configured operators: alpha, delta")
+
+
 @patch("helga.plugins.operator.registry")
 def test_reload_plugin(plugins):
     plugins.reload.return_value = True
