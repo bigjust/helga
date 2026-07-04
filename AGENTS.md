@@ -36,10 +36,10 @@ ruff check helga && black --check helga && mypy helga && pytest
 ## Key quirks
 
 - **`HELGA_SETTINGS` must be empty string** for tests (`HELGA_SETTINGS=''`), otherwise settings module override can break test isolation.
-- **MongoDB** is optional for core operation but required by some features. Tests mock pymongo — no real DB needed.
-- **Tox/CI** runs across Python 3.8–3.14 with a MongoDB service container.
-- **Pre-commit** runs Black + Ruff on every commit (passes `--fix --exit-non-zero-on-fix` to ruff).
-- **Coverage** is always on (pytest addopts includes `--cov=helga --cov-report=term-missing`).
+- **PostgreSQL** is the database backend (not MongoDB). Tests mock `helga.db` — no real DB needed.
+- **Tox/CI** runs across Python 3.8–3.14 with a PostgreSQL service container.
+- **Pre-commit** runs Black + Ruff on every commit (passes `--fix --exit-non-zero-on-fix` to ruff). Ruff may reorder imports — stage the result and retry if pre-commit blocks the commit.
+- **Coverage** is always on (pytest addopts includes `--cov=helga --cov-report=term-missing`). `coverage.xml` is not tracked (in `.gitignore`).
 - **`pyproject.toml`** is the primary config; `setup.py` is backward-compat only.
 
 ## Architecture
@@ -52,19 +52,63 @@ helga/
   webhooks/          # HTTP webhook handlers
   tests/             # mirrors helga/ structure
   settings.py        # defaults + configure()
-  db.py              # MongoDB connection (module-level connect())
+  db.py              # PostgreSQL connection (module-level connect())
   log.py             # logging utilities
 ```
 
 - Plugins register via `helga_plugins` entry_points (setuptools) or decorators (`@command`, `@match`, `@preprocessor`).
 - Plugin loading happens on the `started` signal.
 - Built-in plugins: `help`, `manager`, `operator`, `ping`, `version`, `webhooks`.
+- The **operator plugin** (`helga.plugins.operator`) provides admin-only commands guarded by `settings.OPERATORS`. Subcommands: `join`, `leave`, `autojoin add/remove`, `reload <plugin>`, `restart`, `quit`, `nsa`. Add new subcommands by adding `elif subcmd == "...":` in the `operator()` function.
 
 ## Docker
 
 ```bash
-docker-compose up    # IRC server (localhost:6667) + MongoDB
+docker compose up -d                    # recreate containers with new config
+docker compose up --build -d            # rebuild image + recreate
+docker compose restart helga            # restart container (no config change)
+docker compose exec helga sh            # shell into running container
 ```
+
+### Hot-reload dev workflow
+
+The docker-compose.yml mounts `./helga` at `/app/helga` and sets `PYTHONPATH=/app` so Python imports from your live source instead of the baked-in site-packages. To pick up code changes:
+
+1. Edit code on your host
+2. In IRC: `!operator restart`
+3. Helga re-execs itself via `shutil.which` + `os.execv`, loading the fresh source
+
+No Docker rebuild needed unless you change `settings_docker.py` (baked into the image).
+
+### SELinux (Fedora/RHEL)
+
+Volume mounts on SELinux-enforcing systems need `:Z` to relabel for container access:
+
+```yaml
+volumes:
+  - ./helga:/app/helga:Z
+```
+Without it, the container gets "Permission denied" on the mounted files.
+
+### Docker Compose structure
+
+| Service | Image | Role |
+|---------|-------|------|
+| `irc` | inspircd/inspircd-docker | IRC server (localhost:6667) |
+| `postgres` | postgres:16 | Database (not MongoDB!) |
+| `helga` | built from Dockerfile | The bot, configured via `settings_docker.py` |
+
+### Orphan containers
+
+If you see "Found orphan containers" for `helga-mongo`, it's a leftover from the old MongoDB config. Remove it: `docker container rm helga-mongo`
+
+## Copilot Code Review
+
+This repo has Copilot Code Review enabled. When you create a PR:
+- `copilot-pull-request-reviewer` auto-reviews and leaves inline comments
+- `copilot-swe-agent` may push auto-fix commits to the PR branch
+- To trigger re-review: comment `/copilot review` on the PR
+- Dismiss stale reviews before requesting fresh ones
 
 ## Release
 
