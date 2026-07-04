@@ -137,7 +137,9 @@ def test_operator_restart(mock_os, mock_reactor):
     assert result == "Restarting..."
     mock_reactor.callLater.assert_called_once()
     assert mock_reactor.callLater.call_args[0][0] == 1
-    assert mock_reactor.callLater.call_args[0][1] is mock_os.execv
+    assert mock_reactor.callLater.call_args[0][1] is mock_os.execvp
+    assert mock_reactor.callLater.call_args[0][2] == operator.sys.argv[0]
+    assert mock_reactor.callLater.call_args[0][3] is operator.sys.argv
 
 
 @patch("helga.plugins.operator.reactor")
