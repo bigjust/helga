@@ -1,14 +1,14 @@
 # System Requirements:
 # openssl
 # libssl-dev
-# mongodb
+# postgresql
 # libffi-dev
 
 autobahn
 cffi
+psycopg2-binary
 pyasn1
 pyasn1-modules
-pymongo
 pyOpenSSL
 pystache
 requests
