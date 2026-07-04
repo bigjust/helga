@@ -33,6 +33,19 @@ def iter_entry_points(group):
         return tuple(ep for ep in eps if ep.group == group)
 
 
+def _setting_to_set(setting_name, default, available, settings_obj=settings):
+    """
+    Convert a setting value to a set of names.
+
+    ``True`` means all ``available`` names are selected. ``False``/``None``
+    means none are selected. A list means exactly those names.
+    """
+    value = getattr(settings_obj, setting_name, default)
+    if isinstance(value, bool):
+        return set(available) if value else set()
+    return set(value or [])
+
+
 #: A collection of pre-canned acknowledgement type responses
 ACKS = [
     "roger",
@@ -146,11 +159,7 @@ class Registry:
         :param setting_name: either ENABLED_PLUGINS or DISABLED_PLUGINS
         :param default: the default value to use if the setting does not exist
         """
-        plugins = getattr(settings, setting_name, default)
-        if isinstance(plugins, bool):
-            return self.plugin_names if plugins else set()
-        else:
-            return set(plugins or [])
+        return _setting_to_set(setting_name, default, self.plugin_names, settings_obj=settings)
 
     def register(self, name, fn_or_cls):
         """

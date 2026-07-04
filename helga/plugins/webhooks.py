@@ -31,7 +31,7 @@ from twisted.web import resource, server
 from twisted.web.error import Error
 
 from helga import log, settings
-from helga.plugins import Command, iter_entry_points, registry
+from helga.plugins import Command, _setting_to_set, iter_entry_points, registry
 
 logger = log.getLogger(__name__)
 
@@ -91,11 +91,7 @@ class WebhookPlugin(Command):
         :param setting_name: either ENABLED_WEBHOOKS or DISABLED_WEBHOOKS
         :param default: the default value to use if the setting does not exist
         """
-        webhooks = getattr(settings, setting_name, default)
-        if isinstance(webhooks, bool):
-            return self.webhook_names if webhooks else set()
-        else:
-            return set(webhooks or [])
+        return _setting_to_set(setting_name, default, self.webhook_names, settings_obj=settings)
 
     def _init_routes(self):
         """
