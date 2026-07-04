@@ -15,21 +15,22 @@ services:
       retries: 3
       start_period: 10s
 
-  mongo:
-    image: mongo:7
-    container_name: helga-mongo
+  postgres:
+    image: postgres:16
+    container_name: helga-postgres
     platform: linux/amd64
     ports:
-      - 27017:27017
+      - 5432:5432
     volumes:
-      - mongo_data:/data/db
-      - mongo_config:/data/configdb
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      - MONGO_INITDB_DATABASE=helga
+      - POSTGRES_DB=helga
+      - POSTGRES_USER=helga
+      - POSTGRES_PASSWORD=helga
     networks:
       - helga-network
     healthcheck:
-      test: [CMD, mongosh, --eval, db.adminCommand('ping')]
+      test: [CMD-SHELL, pg_isready -U helga -d helga]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -43,9 +44,11 @@ services:
     container_name: helga-bot
     environment:
       - HELGA_IRC_SERVER=irc
-      - HELGA_MONGO_HOST=mongo
-      - HELGA_MONGO_PORT=27017
-      - HELGA_MONGO_DB=helga
+      - HELGA_DATABASE_HOST=postgres
+      - HELGA_DATABASE_PORT=5432
+      - HELGA_DATABASE_DB=helga
+      - HELGA_DATABASE_USERNAME=helga
+      - HELGA_DATABASE_PASSWORD=helga
       - HELGA_LOG_LEVEL=DEBUG
     volumes:
       # Note: Removed ./helga mount to avoid shadowing installed package
@@ -53,7 +56,7 @@ services:
       - helga_logs:/var/log/helga
       - helga_data:/var/lib/helga
     depends_on:
-      mongo:
+      postgres:
         condition: service_healthy
       irc:
         condition: service_healthy
@@ -70,10 +73,8 @@ networks:
     name: helga-network
 
 volumes:
-  mongo_data:
-    name: helga-mongo-data
-  mongo_config:
-    name: helga-mongo-config
+  postgres_data:
+    name: helga-postgres-data
   helga_logs:
     name: helga-logs
   helga_data:
