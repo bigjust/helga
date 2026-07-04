@@ -34,6 +34,12 @@ def join_autojoined_channels(client):
             logger.exception("Could not autojoin %s", channel)
 
 
+@smokesignal.on("join")
+def list_operators_on_join(client, channel):
+    if client.operators:
+        client.msg(channel, "Configured operators: {}".format(", ".join(sorted(client.operators))))
+
+
 def do_add_autojoin(channel):
     logger.info("Adding autojoin channel %s", channel)
 
