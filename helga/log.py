@@ -25,6 +25,10 @@ def getLogger(name):
     logger.setLevel(getattr(logging, level, logging.INFO))
     logger.propagate = False
 
+    # Avoid adding duplicate handlers if getLogger is called more than once
+    if getattr(logger, "_helga_configured", False):
+        return logger
+
     # Setup the default handler
     if settings.LOG_FILE:
         handler = logging.handlers.RotatingFileHandler(
@@ -40,6 +44,7 @@ def getLogger(name):
 
     handler.setFormatter(formatter)
     logger.addHandler(handler)
+    logger._helga_configured = True
 
     return logger
 
@@ -79,10 +84,10 @@ class UTCTimeLogFilter(logging.Filter):
         """
         Filter the log record and add two attributes:
 
-        * ``utcnow``: the value of `datetime.datetime.utcnow`
+        * ``utcnow``: the current UTC datetime
         * ``utctime``: the time formatted string of ``utcnow`` in the form ``HH:MM:SS``
         """
-        record.utcnow = datetime.datetime.utcnow()
+        record.utcnow = datetime.datetime.now(datetime.timezone.utc)
         record.utctime = record.utcnow.strftime("%H:%M:%S")
         return True
 
@@ -112,15 +117,17 @@ class ChannelLogFileHandler(logging.handlers.BaseRotatingHandler):
         of the following day. For example, if the current datetime is 2014-10-31 08:15:00,
         then the next rollover will be 2014-11-01 00:00:00.
         """
-        now = datetime.datetime.utcnow()
+        now = datetime.datetime.now(datetime.timezone.utc)
         tomorrow = now + datetime.timedelta(days=1)
-        return datetime.datetime(tomorrow.year, tomorrow.month, tomorrow.day)
+        return datetime.datetime(
+            tomorrow.year, tomorrow.month, tomorrow.day, tzinfo=datetime.timezone.utc
+        )
 
     def current_filename(self):
         """
         Returns a UTC dated filename suitable as a log file. Example: 2014-12-15.txt
         """
-        return datetime.datetime.utcnow().strftime("%Y-%m-%d.txt")
+        return datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%d.txt")
 
     def shouldRollover(self, record):
         """
@@ -129,7 +136,7 @@ class ChannelLogFileHandler(logging.handlers.BaseRotatingHandler):
 
         :param record: a python log record
         """
-        return datetime.datetime.utcnow() >= self.next_rollover
+        return datetime.datetime.now(datetime.timezone.utc) >= self.next_rollover
 
     def doRollover(self):
         """
