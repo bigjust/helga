@@ -109,7 +109,9 @@ def operator(client, channel, nick, message, cmd, args):
         return reload_plugin(args[1])
 
     elif subcmd == "restart":
-        reactor.callLater(1, os.execv, sys.executable, [sys.executable] + sys.argv)
+        # ponytail: execvp searches PATH if argv[0] has no slash; works when
+        # helga is invoked via console_script (just 'helga') or an absolute path
+        reactor.callLater(1, os.execvp, sys.argv[0], sys.argv)
         return "Restarting..."
 
     elif subcmd == "quit":
