@@ -3,7 +3,7 @@ import random
 import smokesignal
 
 from helga import log
-from helga.db import db
+from helga.db import add_autojoin, get_autojoin_channels, get_connection, remove_autojoin
 from helga.plugins import command, random_ack, registry
 
 logger = log.getLogger(__name__)
@@ -19,31 +19,28 @@ nopes = [
 
 @smokesignal.on("signon")
 def join_autojoined_channels(client):
-    if db is None:  # pragma: no cover
+    if get_connection() is None:  # pragma: no cover
         logger.warning("Cannot autojoin channels. No database connection")
         return
 
-    for channel in db.autojoin.find():
+    for channel in get_autojoin_channels():
         try:
-            client.join(channel["channel"])
+            client.join(channel)
         except Exception:  # pragma: no cover
-            logger.exception("Could not autojoin %s", channel["channel"])
+            logger.exception("Could not autojoin %s", channel)
 
 
-def add_autojoin(channel):
+def do_add_autojoin(channel):
     logger.info("Adding autojoin channel %s", channel)
-    db_opts = {"channel": channel}
 
-    if db.autojoin.find(db_opts).count() == 0:
-        db.autojoin.insert(db_opts)
+    if add_autojoin(channel):
         return random_ack()
-    else:
-        return "I'm already doing that"
+    return "I'm already doing that"
 
 
-def remove_autojoin(channel):
+def do_remove_autojoin(channel):
     logger.info("Removing autojoin %s", channel)
-    db.autojoin.remove({"channel": channel})
+    remove_autojoin(channel)
     return random_ack()
 
 
@@ -88,9 +85,9 @@ def operator(client, channel, nick, message, cmd, args):
     elif subcmd == "autojoin":
         op, channel = args[1], args[2]
         if op == "add":
-            return add_autojoin(channel)
+            return do_add_autojoin(channel)
         elif op == "remove":
-            return remove_autojoin(channel)
+            return do_remove_autojoin(channel)
 
     elif subcmd == "nsa":
         # Never document this
