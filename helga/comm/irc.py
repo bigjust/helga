@@ -7,11 +7,11 @@ import contextlib
 import time
 
 import smokesignal
-from twisted.internet import protocol, reactor
+from twisted.internet import protocol
 from twisted.words.protocols import irc
 
 from helga import log, settings
-from helga.comm.base import BaseClient
+from helga.comm.base import BaseClient, handle_reconnect
 from helga.plugins import registry
 
 logger = log.getLogger(__name__)
@@ -45,13 +45,7 @@ class Factory(protocol.ClientFactory):
         :data:`~helga.settings.AUTO_RECONNECT_DELAY`)
         """
         logger.info("Connection to server lost: %s", reason)
-
-        # FIXME: Max retries
-        if getattr(settings, "AUTO_RECONNECT", True):
-            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
-            reactor.callLater(delay, connector.connect)
-        else:
-            raise reason
+        handle_reconnect(connector, reason, lost=True)
 
     def clientConnectionFailed(self, connector, reason):
         """
@@ -60,13 +54,7 @@ class Factory(protocol.ClientFactory):
         :data:`~helga.settings.AUTO_RECONNECT_DELAY`)
         """
         logger.warning("Connection to server failed: %s", reason)
-
-        # FIXME: Max retries
-        if getattr(settings, "AUTO_RECONNECT", True):
-            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
-            reactor.callLater(delay, connector.connect)
-        else:
-            reactor.stop()
+        handle_reconnect(connector, reason, lost=False)
 
 
 class Client(irc.IRCClient, BaseClient):

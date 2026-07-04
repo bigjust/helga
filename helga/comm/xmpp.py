@@ -3,13 +3,13 @@ import time
 import uuid
 
 import smokesignal
-from twisted.internet import protocol, reactor, task
+from twisted.internet import protocol, task
 from twisted.words.protocols.jabber import client, jid, xmlstream
 from twisted.words.xish import domish, xpath
 from twisted.words.xish.xmlstream import XmlStreamFactoryMixin
 
 from helga import log, settings
-from helga.comm.base import BaseClient
+from helga.comm.base import BaseClient, handle_reconnect
 from helga.plugins import registry
 
 logger = log.getLogger(__name__)
@@ -67,13 +67,7 @@ class Factory(XmlStreamFactoryMixin, protocol.ClientFactory):
         :raises: The given reason unless AUTO_RECONNECT is enabled
         """
         logger.error("Connection to server lost: %s", reason)
-
-        # FIXME: Max retries
-        if getattr(settings, "AUTO_RECONNECT", True):
-            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
-            reactor.callLater(delay, connector.connect)
-        else:
-            raise reason
+        handle_reconnect(connector, reason, lost=True)
 
     def clientConnectionFailed(self, connector, reason):
         """
@@ -86,13 +80,7 @@ class Factory(XmlStreamFactoryMixin, protocol.ClientFactory):
         :raises: The given reason unless AUTO_RECONNECT is enabled
         """
         logger.warning("Connection to server failed: %s", reason)
-
-        # FIXME: Max retries
-        if getattr(settings, "AUTO_RECONNECT", True):
-            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
-            reactor.callLater(delay, connector.connect)
-        else:
-            reactor.stop()
+        handle_reconnect(connector, reason, lost=False)
 
 
 class Client(BaseClient):

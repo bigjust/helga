@@ -35,8 +35,8 @@ class FactoryTestCase(TestCase):
             assert factory.jid.full() == "me@somehost.net"
             assert factory.auth.password == "hunter2"
 
-    @patch("helga.comm.xmpp.settings")
-    @patch("helga.comm.xmpp.reactor")
+    @patch("helga.comm.base.settings")
+    @patch("helga.comm.base.reactor")
     def test_client_connection_lost_retries(self, reactor, settings):
         settings.AUTO_RECONNECT = True
         settings.AUTO_RECONNECT_DELAY = 1
@@ -44,21 +44,21 @@ class FactoryTestCase(TestCase):
         self.factory.clientConnectionLost(connector, Exception)
         reactor.callLater.assert_called_with(1, connector.connect)
 
-    @patch("helga.comm.xmpp.settings")
+    @patch("helga.comm.base.settings")
     def test_client_connection_lost_raises(self, settings):
         settings.AUTO_RECONNECT = False
         connector = Mock()
         self.assertRaises(Exception, self.factory.clientConnectionLost, connector, Exception)
 
-    @patch("helga.comm.xmpp.settings")
-    @patch("helga.comm.xmpp.reactor")
+    @patch("helga.comm.base.settings")
+    @patch("helga.comm.base.reactor")
     def test_client_connection_failed(self, reactor, settings):
         settings.AUTO_RECONNECT = False
         self.factory.clientConnectionFailed(Mock(), reactor)
         assert reactor.stop.called
 
-    @patch("helga.comm.xmpp.settings")
-    @patch("helga.comm.xmpp.reactor")
+    @patch("helga.comm.base.settings")
+    @patch("helga.comm.base.reactor")
     def test_client_connection_failed_retries(self, reactor, settings):
         settings.AUTO_RECONNECT = True
         settings.AUTO_RECONNECT_DELAY = 1
