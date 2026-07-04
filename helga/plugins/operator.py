@@ -105,7 +105,7 @@ def operator(client, channel, nick, message, cmd, args):
 
     elif subcmd == "restart":
         executable = shutil.which(sys.argv[0]) or sys.argv[0]
-        reactor.callLater(1, os.execv, executable, sys.argv)
+        reactor.callLater(1, os.execv, executable, [executable] + sys.argv[1:])
         return "Restarting..."
 
     elif subcmd == "quit":
