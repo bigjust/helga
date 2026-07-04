@@ -79,9 +79,46 @@ If you are looking to get help with helga, join the #helgabot IRC channel on fre
 Docker
 ------
 
-A docker compose file is included, which has a irc server and mongodb instance. Once you bring
-the cluster using `docker-compose up`, you can connect to the irc on localhost port 6667, and
-join the #test channel.
+A docker compose file is included with an IRC server (InspIRCd) and PostgreSQL.
+
+Quick start:
+
+::
+
+    docker compose up -d
+    # Connect to localhost:6667 and join #helga-dev
+
+Developing a plugin
+^^^^^^^^^^^^^^^^^^^
+
+Clone your plugin repo alongside helga, then mount and auto-install it with a
+compose overlay file.  For example, with ``helga-oral-history`` as a sibling:
+
+Create ``docker-compose.dev.yml`` in the plugin repo:
+
+.. code-block:: yaml
+
+    services:
+      helga:
+        volumes:
+          - ../helga-oral-history:/app/helga-oral-history:Z
+        entrypoint: >
+          sh -c "pip install -q -e /app/helga-oral-history
+                 && exec /opt/venv/bin/helga --settings=/etc/helga_settings.py"
+
+Run with the overlay:
+
+::
+
+    cd ~/code/helga
+    docker compose -f docker-compose.yml -f ../helga-oral-history/docker-compose.dev.yml \
+        up -d --force-recreate helga
+
+Reload the plugin after editing, without restarting the container:
+
+::
+
+    !operator reload oral_history
 
 
 Deployment
@@ -105,14 +142,6 @@ The deployment includes:
 - Environment-based configuration
 
 For complete instructions, see `IBM_CLOUD_DEPLOYMENT.md`_.
-
-Docker
-~~~~~~
-
-A docker compose file is included for local development and testing. It includes an IRC server
-and MongoDB instance. Once you bring up the cluster using ``docker-compose up``, you can connect
-to the IRC server on localhost port 6667 and join the #test channel.
-
 
 License
 -------
