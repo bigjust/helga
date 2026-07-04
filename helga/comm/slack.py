@@ -25,7 +25,7 @@ from autobahn.twisted.websocket import WebSocketClientFactory, WebSocketClientPr
 from twisted.internet import reactor, task
 
 from helga import log, settings
-from helga.comm.base import BaseClient
+from helga.comm.base import BaseClient, handle_reconnect
 from helga.plugins import registry
 
 logger = log.getLogger(__name__)
@@ -69,33 +69,16 @@ class Factory(WebSocketClientFactory):
     def clientConnectionLost(self, connector, reason):
         """
         Handler for when the Slack RTM connection is lost.
-        TODO: Instead of stopping the reactor, we should handle auto reconnect
-        if helga is configured for it (see settings
-        :data:`~helga.settings.AUTO_RECONNECT` and
-        :data:`~helga.settings.AUTO_RECONNECT_DELAY`)
-        NOTE: this approach needs more work, because it seems to fire even when
-        the main helga process receives SIGINT (ctrl-c).
         """
-        # FIXME: need to handle auto reconnects
         logger.info("Connection to server lost: %s", reason)
-
-        # FIXME: Max retries
-        if getattr(settings, "AUTO_RECONNECT", True):
-            delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
-            reactor.callLater(delay, connector.connect)
-        else:
-            raise reason
+        handle_reconnect(connector, reason, lost=True)
 
     def clientConnectionFailed(self, connector, reason):
         """
         Handler for when the Slack RTM connection fails.
-        TODO: Instead of stopping the reactor, we should handle auto reconnect
-        if helga is configured for it (see settings
-        :data:`~helga.settings.AUTO_RECONNECT` and
-        :data:`~helga.settings.AUTO_RECONNECT_DELAY`)
         """
         logger.warning("Connection to server failed: %s", reason)
-        reactor.stop()
+        handle_reconnect(connector, reason, lost=False)
 
 
 class Client(WebSocketClientProtocol, BaseClient):  # type: ignore[misc]

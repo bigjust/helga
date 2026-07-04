@@ -4,6 +4,8 @@ Base implementations for comm clients
 
 from collections import defaultdict
 
+from twisted.internet import reactor
+
 from helga import settings
 
 
@@ -50,3 +52,21 @@ class BaseClient:
         self.channel_loggers = {}
 
     # TODO: fill in the base methods so we can do appropriate tracking
+
+
+def handle_reconnect(connector, reason, *, lost=False):
+    """
+    Handle auto-reconnect after a connection is lost or fails.
+
+    :param connector: the twisted connector
+    :param reason: a twisted Failure instance
+    :param lost: True if the connection was lost, False if it failed to connect
+    :raises: the given reason if reconnect is disabled and the connection was lost
+    """
+    if getattr(settings, "AUTO_RECONNECT", True):
+        delay = getattr(settings, "AUTO_RECONNECT_DELAY", 5)
+        reactor.callLater(delay, connector.connect)
+    elif lost:
+        raise reason
+    else:
+        reactor.stop()
