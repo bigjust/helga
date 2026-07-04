@@ -3,17 +3,6 @@ Helga's core plugin library containing base implementations for creating plugins
 as well as utilities for managing plugins at runtime
 """
 
-from importlib import reload
-
-try:
-    from importlib import metadata as importlib_metadata
-except ImportError:  # pragma: no cover
-    importlib_metadata = None  # type: ignore[assignment]
-
-try:
-    import pkg_resources
-except ImportError:  # pragma: no cover
-    pkg_resources = None  # type: ignore[assignment]
 import functools
 import random
 import re
@@ -21,6 +10,8 @@ import shlex
 import sys
 import warnings
 from collections import defaultdict
+from importlib import metadata as importlib_metadata
+from importlib import reload
 from operator import methodcaller
 
 import smokesignal
@@ -31,21 +22,15 @@ logger = log.getLogger(__name__)
 
 
 def iter_entry_points(group):
-    if importlib_metadata is not None:
-        try:
-            return tuple(importlib_metadata.entry_points(group=group))
-        except TypeError:  # pragma: no cover
-            # Python 3.9 and earlier: entry_points() returns a dict
-            eps = importlib_metadata.entry_points()
-            if isinstance(eps, dict):
-                return tuple(eps.get(group, []))
-            # Python 3.10+: entry_points() returns SelectableGroups
-            return tuple(ep for ep in eps if ep.group == group)
-
-    if pkg_resources is not None:
-        return pkg_resources.iter_entry_points(group=group)
-
-    return ()
+    try:
+        return tuple(importlib_metadata.entry_points(group=group))
+    except TypeError:  # pragma: no cover
+        # Python 3.9 and earlier: entry_points() returns a dict
+        eps = importlib_metadata.entry_points()
+        if isinstance(eps, dict):
+            return tuple(eps.get(group, []))
+        # Python 3.10+: entry_points() returns SelectableGroups
+        return tuple(ep for ep in eps if ep.group == group)
 
 
 #: A collection of pre-canned acknowledgement type responses
