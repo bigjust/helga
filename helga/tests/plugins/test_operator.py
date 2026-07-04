@@ -11,6 +11,11 @@ def test_operator_ignores_non_oper_user():
     assert operator.operator(client, "#bots", "sduncan", "do something", "", "") in formatted_nopes
 
 
+def test_operator_returns_usage_when_no_args():
+    client = stub(operators=["me"])
+    assert "Usage:" in operator.operator(client, "#bots", "me", "helga operator", "operator", [])
+
+
 def test_operator_join_calls_client_join():
     client = Mock(operators=["me"])
     operator.operator(client, "#bots", "me", "do something", "op", ["join", "#foo"])
