@@ -37,7 +37,7 @@ def join_autojoined_channels(client):
 @smokesignal.on("join")
 def list_operators_on_join(client, channel):
     if client.operators:
-        client.msg(channel, "Configured operators: {}".format(", ".join(sorted(client.operators))))
+        client.msg(channel, "Operator mode is configured ({} operators)".format(len(client.operators)))
 
 
 def do_add_autojoin(channel):

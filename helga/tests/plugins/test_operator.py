@@ -101,7 +101,7 @@ def test_join_autojoined_channels(get_autojoin_channels, get_connection):
 def test_list_operators_on_join():
     client = Mock(operators={"delta", "alpha"})
     operator.list_operators_on_join(client, "#bots")
-    client.msg.assert_called_once_with("#bots", "Configured operators: alpha, delta")
+    client.msg.assert_called_once_with("#bots", "Operator mode is configured (2 operators)")
 
 
 @patch("helga.plugins.operator.registry")
