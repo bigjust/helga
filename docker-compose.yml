@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   irc:
     image: inspircd/inspircd-docker:latest
@@ -50,9 +48,12 @@ services:
       - HELGA_DATABASE_USERNAME=helga
       - HELGA_DATABASE_PASSWORD=helga
       - HELGA_LOG_LEVEL=DEBUG
+      # Prefer mounted source over site-packages so operator restart picks up edits
+      - PYTHONPATH=/app
     volumes:
-      # Note: Removed ./helga mount to avoid shadowing installed package
-      # For development, rebuild the image after code changes
+      # Mount source so helga operator restart picks up code changes
+      # :Z needed for SELinux (Fedora/RHEL) — relabels volume for container access
+      - ./helga:/app/helga:Z
       - helga_logs:/var/log/helga
       - helga_data:/var/lib/helga
     depends_on:
