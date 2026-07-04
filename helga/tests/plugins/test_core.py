@@ -781,24 +781,23 @@ def test_custom_plugin_priorities(tmpdir):
     assert plugins.PRIORITY_HIGH == 9000
 
 
-def test_iter_entry_points_uses_pkg_resources():
+def test_iter_entry_points_uses_importlib_metadata():
     from helga import plugins as p
 
     ep = Mock()
     ep.name = "foo"
 
-    with patch.object(p, "importlib_metadata", None):
-        with patch.object(p, "pkg_resources") as pkg_resources:
-            pkg_resources.iter_entry_points.return_value = [ep]
-            result = p.iter_entry_points("helga_plugins")
-            assert list(result) == [ep]
-            pkg_resources.iter_entry_points.assert_called_with(group="helga_plugins")
+    with patch.object(p.importlib_metadata, "entry_points") as entry_points:
+        entry_points.return_value = [ep]
+        result = p.iter_entry_points("helga_plugins")
+        assert list(result) == [ep]
+        entry_points.assert_called_with(group="helga_plugins")
 
 
-def test_iter_entry_points_no_backend():
+def test_iter_entry_points_returns_empty_when_group_missing():
     from helga import plugins as p
 
-    with patch.object(p, "importlib_metadata", None):
-        with patch.object(p, "pkg_resources", None):
-            result = p.iter_entry_points("helga_plugins")
-            assert result == ()
+    with patch.object(p.importlib_metadata, "entry_points") as entry_points:
+        entry_points.return_value = {}
+        result = p.iter_entry_points("helga_plugins")
+        assert result == ()

@@ -25,26 +25,15 @@ For more information, see :ref:`webhooks`
 import functools
 import re
 
-try:
-    import pkg_resources
-except ImportError:  # pragma: no cover
-    pkg_resources = None  # type: ignore[assignment]
-
 import smokesignal
 from twisted.internet import reactor
 from twisted.web import resource, server
 from twisted.web.error import Error
 
 from helga import log, settings
-from helga.plugins import Command, registry
+from helga.plugins import Command, iter_entry_points, registry
 
 logger = log.getLogger(__name__)
-
-
-def iter_entry_points(group):
-    if pkg_resources is not None:
-        return pkg_resources.iter_entry_points(group=group)
-    return ()
 
 
 # Subclassed only for better naming
