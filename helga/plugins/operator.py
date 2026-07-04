@@ -1,5 +1,6 @@
 import os
 import random
+import shutil
 import sys
 
 import smokesignal
@@ -31,12 +32,6 @@ def join_autojoined_channels(client):
             client.join(channel)
         except Exception:  # pragma: no cover
             logger.exception("Could not autojoin %s", channel)
-
-
-@smokesignal.on("join")
-def list_operators_on_join(client, channel):
-    if client.operators:
-        client.msg(channel, f"Operators: {', '.join(sorted(client.operators))}")
 
 
 def do_add_autojoin(channel):
@@ -109,9 +104,8 @@ def operator(client, channel, nick, message, cmd, args):
         return reload_plugin(args[1])
 
     elif subcmd == "restart":
-        # ponytail: execvp searches PATH if argv[0] has no slash; works when
-        # helga is invoked via console_script (just 'helga') or an absolute path
-        reactor.callLater(1, os.execvp, sys.argv[0], sys.argv)
+        executable = shutil.which(sys.argv[0]) or sys.argv[0]
+        reactor.callLater(1, os.execv, executable, sys.argv)
         return "Restarting..."
 
     elif subcmd == "quit":

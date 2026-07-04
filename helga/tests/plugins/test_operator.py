@@ -98,18 +98,6 @@ def test_join_autojoined_channels(get_autojoin_channels, get_connection):
     assert client.join.call_args_list == [call("#bots"), call("☃")]
 
 
-def test_list_operators_on_join_announces_operators():
-    client = Mock(operators={"alice", "bob"})
-    operator.list_operators_on_join(client, "#bots")
-    client.msg.assert_called_once_with("#bots", "Operators: alice, bob")
-
-
-def test_list_operators_on_join_skips_when_no_operators():
-    client = Mock(operators=set())
-    operator.list_operators_on_join(client, "#bots")
-    assert not client.msg.called
-
-
 @patch("helga.plugins.operator.registry")
 def test_reload_plugin(plugins):
     plugins.reload.return_value = True
@@ -131,14 +119,16 @@ def test_reload_plugin_handles_unicode(plugins):
 
 @patch("helga.plugins.operator.reactor")
 @patch("helga.plugins.operator.os")
-def test_operator_restart(mock_os, mock_reactor):
+@patch("helga.plugins.operator.shutil")
+def test_operator_restart(mock_shutil, mock_os, mock_reactor):
+    mock_shutil.which.return_value = "/usr/bin/helga"
     client = Mock(operators=["me"])
     result = operator.operator(client, "#bots", "me", "message", "operator", ["restart"])
     assert result == "Restarting..."
     mock_reactor.callLater.assert_called_once()
     assert mock_reactor.callLater.call_args[0][0] == 1
-    assert mock_reactor.callLater.call_args[0][1] is mock_os.execvp
-    assert mock_reactor.callLater.call_args[0][2] == operator.sys.argv[0]
+    assert mock_reactor.callLater.call_args[0][1] is mock_os.execv
+    assert mock_reactor.callLater.call_args[0][2] == "/usr/bin/helga"
     assert mock_reactor.callLater.call_args[0][3] is operator.sys.argv
 
 
