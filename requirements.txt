@@ -6,7 +6,6 @@
 
 autobahn
 cffi
-decorator
 pyasn1
 pyasn1-modules
 pymongo
@@ -18,4 +17,3 @@ requests
 service-identity
 smokesignal
 Twisted
-websocket-client
