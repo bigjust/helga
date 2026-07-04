@@ -21,6 +21,7 @@ def test_getLogger(settings, logging):
 
     expected_format = "%(asctime)-15s [%(levelname)s] [%(name)s:%(lineno)d]: %(message)s"
 
+    logger._helga_configured = False
     logging.getLogger.return_value = logger
     logging.StreamHandler.return_value = handler
     logging.Formatter.return_value = formatter
@@ -45,6 +46,7 @@ def test_get_logger_uses_log_file(settings, logging):
     settings.LOG_FILE = "/path/to/foo.log"
     settings.LOG_FORMAT = None
 
+    logger._helga_configured = False
     logging.getLogger.return_value = logger
     logging.StreamHandler.return_value = handler
     logging.Formatter.return_value = formatter
@@ -66,12 +68,30 @@ def test_get_logger_uses_custom_formatter(settings, logging):
     settings.LOG_FILE = "/path/to/foo.log"
     settings.LOG_FORMAT = "blah blah blah"
 
+    logger._helga_configured = False
     logging.getLogger.return_value = logger
     logging.StreamHandler.return_value = handler
     logging.Formatter.return_value = formatter
 
     log.getLogger("foo")
     logging.Formatter.assert_called_with(settings.LOG_FORMAT)
+
+
+@patch("helga.log.logging")
+@patch("helga.log.settings")
+def test_get_logger_is_idempotent(settings, logging):
+    logger = Mock()
+    logger._helga_configured = True
+
+    settings.LOG_LEVEL = "INFO"
+    settings.LOG_FILE = None
+    settings.LOG_FORMAT = None
+
+    logging.getLogger.return_value = logger
+
+    log.getLogger("foo")
+    assert not logging.StreamHandler.called
+    assert not logger.addHandler.called
 
 
 @patch("helga.log.os")
@@ -140,11 +160,13 @@ class TestChannelLogFileHandler:
         assert re.match(r"/tmp/[0-9]{4}-[0-9]{2}-[0-9]{2}.txt", self.handler.baseFilename)
 
     def test_compute_next_rollover(self):
-        expected = datetime.datetime(2014, 11, 1)
-        with freezegun.freeze_time("2014-10-31 08:15"):
+        expected = datetime.datetime(2014, 11, 1, tzinfo=datetime.timezone.utc)
+        with freezegun.freeze_time(
+            datetime.datetime(2014, 10, 31, 8, 15, tzinfo=datetime.timezone.utc)
+        ):
             assert self.handler.compute_next_rollover() == expected
 
-    @freezegun.freeze_time("2014-10-31 08:15")
+    @freezegun.freeze_time(datetime.datetime(2014, 10, 31, 8, 15, tzinfo=datetime.timezone.utc))
     def test_current_filename(self):
         assert self.handler.current_filename() == "2014-10-31.txt"
 
@@ -157,8 +179,10 @@ class TestChannelLogFileHandler:
         ],
     )
     def test_shouldRollover(self, datestr, rollover):
-        self.handler.next_rollover = datetime.datetime(2014, 11, 1)
-        with freezegun.freeze_time(datestr):
+        self.handler.next_rollover = datetime.datetime(2014, 11, 1, tzinfo=datetime.timezone.utc)
+        with freezegun.freeze_time(
+            datetime.datetime.fromisoformat(datestr).replace(tzinfo=datetime.timezone.utc)
+        ):
             assert self.handler.shouldRollover(None) is rollover
 
     def test_do_rollover(self):
@@ -167,11 +191,13 @@ class TestChannelLogFileHandler:
 
         old_rollover = self.handler.next_rollover
         old_filename = self.handler.baseFilename
-        expected_rollover = datetime.datetime(2014, 11, 1, 0, 0, 0)
+        expected_rollover = datetime.datetime(2014, 11, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
 
         assert old_rollover != expected_rollover
 
-        with freezegun.freeze_time("2014-10-31 08:15"), patch.object(self.handler, "_open"):
+        with freezegun.freeze_time(
+            datetime.datetime(2014, 10, 31, 8, 15, tzinfo=datetime.timezone.utc)
+        ), patch.object(self.handler, "_open"):
             self.handler.doRollover()
             assert stream.close.called
             assert self.handler._open.called
@@ -183,7 +209,7 @@ class TestChannelLogFileHandler:
 def test_utc_time_filter():
     record = Mock()
     filter = log.UTCTimeLogFilter()
-    date = datetime.datetime(2014, 10, 31, 8, 15)
+    date = datetime.datetime(2014, 10, 31, 8, 15, tzinfo=datetime.timezone.utc)
     with freezegun.freeze_time(date):
         filter.filter(record)
         assert record.utcnow == date
