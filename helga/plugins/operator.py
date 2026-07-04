@@ -72,6 +72,12 @@ def operator(client, channel, nick, message, cmd, args):
     if nick not in client.operators:
         return random.choice(nopes).format(nick=nick)
 
+    if not args:
+        return (
+            "Usage: helga (operator|oper|op) (reload <plugin>|"
+            "(join|leave|autojoin (add|remove)) <channel>)"
+        )
+
     subcmd = args[0]
 
     if subcmd in ("join", "leave"):
