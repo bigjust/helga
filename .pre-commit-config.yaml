@@ -28,7 +28,7 @@ repos:
 
   # Python code formatting with Black
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 26.5.1
     hooks:
       - id: black
         language_version: python3
@@ -36,7 +36,7 @@ repos:
 
   # Python linting with Ruff (replaces flake8, isort, and more)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9
+    rev: v0.15.20
     hooks:
       # Run the linter
       - id: ruff
@@ -96,7 +96,7 @@ default_language_version:
   python: python3.12
 
 # Run these hooks on all files during first setup
-default_stages: [commit]
+default_stages: [pre-commit]
 
 # Exclude certain files/directories
 exclude: |
