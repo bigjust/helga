@@ -64,12 +64,16 @@ jobs:
         python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13', '3.14']
 
     services:
-      mongodb:
-        image: mongo:7
+      postgres:
+        image: postgres:16
         ports:
-          - 27017:27017
+          - 5432:5432
+        env:
+          POSTGRES_DB: helga
+          POSTGRES_USER: helga
+          POSTGRES_PASSWORD: helga
         options: >-
-          --health-cmd "mongosh --eval 'db.adminCommand({ping: 1})'"
+          --health-cmd pg_isready
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -98,7 +102,11 @@ jobs:
       - name: Run tests
         env:
           HELGA_SETTINGS: ''
-          HELGA_MONGO_HOST: localhost
+          HELGA_DATABASE_HOST: localhost
+          HELGA_DATABASE_PORT: 5432
+          HELGA_DATABASE_DB: helga
+          HELGA_DATABASE_USERNAME: helga
+          HELGA_DATABASE_PASSWORD: helga
         run: |
           pytest --cov=helga --cov-report=xml --cov-report=term-missing
 
