@@ -10,7 +10,7 @@ black>=26.5.1
 
 # Build tools
 build>=1.5.0
-coverage[toml]>=7.14.3
+coverage[toml]>=7.15.0
 freezegun>=1.5.5
 isort>=8.0.1
 mock>=5.2.0
