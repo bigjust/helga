@@ -36,5 +36,5 @@ sphinx-rtd-theme>=3.1.0
 # Testing tools
 tox>=4.56.1
 twine>=6.2.0
-types-requests>=2.33.0.20260518
+types-requests>=2.33.0.20260712
 wheel>=0.47.0
