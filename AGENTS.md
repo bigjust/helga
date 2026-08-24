@@ -6,7 +6,7 @@ Chat bot for Python 3.8+ built on Twisted. Supports IRC, XMPP, Slack, Discord.
 
 - CLI: `helga.bin.helga:main` (console_script `helga`)
 - Settings: `HELGA_SETTINGS` env var or `--settings` flag (module path or file path)
-- Server type: `settings.SERVER['TYPE']` — `'irc'` (default), `'xmpp'`, `'slack'`
+- Server type: `settings.SERVER['TYPE']` — `'irc'` (default), `'xmpp'`, `'slack'`, `'discord'`
 
 ## Commands
 
@@ -17,12 +17,12 @@ pre-commit install
 
 # lint / format / typecheck (run in this order)
 ruff check helga
-black --check helga
+ruff format --check helga
 mypy helga
 
 # auto-fix
 ruff check --fix helga
-black helga
+ruff format helga
 
 # test
 pytest                                              # all tests
@@ -30,7 +30,7 @@ pytest helga/tests/test_settings.py                 # single file
 pytest helga/tests/test_settings.py::test_configure # single test
 
 # full CI pipeline equivalent
-ruff check helga && black --check helga && mypy helga && pytest
+ruff check helga && ruff format --check helga && mypy helga && pytest
 ```
 
 ## Key quirks

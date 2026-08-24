@@ -25,7 +25,7 @@ def run():
 
     if settings.SERVER.get("TYPE", False) == "cli":
         stdio.StandardIO(factory.client)
-    elif settings.SERVER.get("TYPE", False) == "slack":
+    elif settings.SERVER.get("TYPE", False) in ("slack", "discord"):
         connectWS(factory=factory)
     elif settings.SERVER.get("SSL", False):
         reactor.connectSSL(

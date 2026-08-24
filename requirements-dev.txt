@@ -6,7 +6,6 @@
 bandit[toml]>=1.9.4
 
 # Code quality
-black>=26.5.1
 
 # Build tools
 build>=1.5.1

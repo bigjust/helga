@@ -26,15 +26,9 @@ repos:
         args: [--pytest-test-first]
       - id: requirements-txt-fixer
 
-  # Python code formatting with Black
-  - repo: https://github.com/psf/black
-    rev: 26.5.1
-    hooks:
-      - id: black
-        language_version: python3
-        args: [--line-length=100]
-
-  # Python linting with Ruff (replaces flake8, isort, and more)
+  # Python linting + formatting with Ruff (formatting replaces black;
+  # running two formatters lets black and ruff-format fight over the same
+  # lines, so ruff-format is the single canonical formatter)
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.15.20
     hooks:
@@ -43,6 +37,7 @@ repos:
         args: [--fix, --exit-non-zero-on-fix]
       # Run the formatter
       - id: ruff-format
+
 
   # Type checking with mypy (disabled for now - enable gradually)
   # - repo: https://github.com/pre-commit/mirrors-mypy

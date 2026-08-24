@@ -79,7 +79,7 @@ pytest
 
 # Check code quality
 ruff check helga
-black --check helga
+ruff format --check helga
 mypy helga
 ```
 
@@ -104,7 +104,7 @@ git checkout -b fix/your-bug-fix
 
 ```bash
 # Format code
-black helga
+ruff format helga
 ruff check --fix helga
 
 # Run all pre-commit hooks
@@ -159,13 +159,13 @@ Then create a Pull Request on GitHub.
 
 We use modern Python tooling for consistent code quality:
 
-#### Black (Code Formatting)
+#### Ruff Formatting
 
 - Line length: 100 characters
 - Automatic formatting on commit (via pre-commit)
 
 ```bash
-black helga
+ruff format helga
 ```
 
 #### Ruff (Linting)

@@ -177,6 +177,36 @@ nicks, and the connector has support for this, so you should not set
 :data:`~helga.settings.COMMAND_PREFIX_BOTNICK` in your configuration.
 
 
+.. _config.discord:
+
+Discord Support
+^^^^^^^^^^^^^^^
+Helga can connect to `Discord`_ as a bot application. The connector talks directly to the
+Discord gateway and REST APIs over WebSockets, so no additional client library is required.
+A configuration for connecting to Discord might look like::
+
+    SERVER = {
+        'TYPE': 'discord',
+        'API_KEY': 'your-bot-token',
+    }
+
+As with Slack, a Discord bot's username is configured when the bot application is created,
+and Helga will detect it automatically from the gateway ``READY`` event, so you should not
+specify :data:`~helga.settings.NICK`. Similarly, Discord uses the "@ mentions" syntax for
+addressing users, and the connector has support for this, so you should not set
+:data:`~helga.settings.COMMAND_PREFIX_BOTNICK` in your configuration.
+
+Two of the gateway intents Helga requests, ``GUILD_MEMBERS`` and ``MESSAGE_CONTENT``, are
+privileged intents that must be explicitly enabled for your bot application in the
+`Discord developer portal`_, or the gateway will refuse the connection. If you need to
+customize the requested intents, set the ``DISCORD_INTENTS`` setting to an integer bitmask
+(see `gateway intents`_).
+
+Because Discord bots must be invited to a server rather than joining channels on command,
+the ``join``/``leave`` operator subcommands (see :ref:`builtin.plugins.operator`) are not
+supported for this backend and will just return an explanatory message.
+
+
 .. _config.cli:
 
 CLI Backend
@@ -208,3 +238,6 @@ or use ``LOG_FILE`` in your settings to keep log lines from interleaving with ch
 .. _`HipChat XMPP Settings`: https://hipchat.com/account/xmpp
 .. _`hipchat_nicks`: https://github.com/shaunduncan/helga-hipchat-nicks
 .. _`Slack`: https://www.slack.com/
+.. _`Discord`: https://discord.com/
+.. _`Discord developer portal`: https://discord.com/developers/applications
+.. _`gateway intents`: https://discord.com/developers/docs/topics/gateway#gateway-intents

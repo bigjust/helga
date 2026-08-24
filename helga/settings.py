@@ -22,15 +22,22 @@ import sys
 #:
 #: Additional, optional keys are supported for different chat backends:
 #:
-#: - ``TYPE``: the backend type to use, 'irc', 'xmpp', or 'cli'
+#: - ``TYPE``: the backend type to use, 'irc', 'xmpp', 'slack', 'discord', or 'cli'
 #: - ``MUC_HOST``: the MUC group chat domain like 'conference.example.com' for group chat
 #: - ``JID``: A full jabber ID to use instead of USERNAME (xmpp only)
-#: - ``API_KEY``: the Slack bot API key (slack only)
+#: - ``API_KEY``: the Slack bot API key (slack only), or the Discord bot token (discord only)
 SERVER = {
     "HOST": "localhost",
     "PORT": 6667,
     "TYPE": "irc",
 }
+
+#: Discord only. An integer bitmask of gateway intents to request when identifying with the
+#: Discord gateway. Defaults to :data:`helga.comm.discord.DEFAULT_INTENTS`, which includes the
+#: privileged ``GUILD_MEMBERS`` and ``MESSAGE_CONTENT`` intents. Those must be explicitly
+#: enabled for the bot application in the Discord developer portal, or the gateway will
+#: reject the connection.
+# DISCORD_INTENTS = 37379
 
 
 #: A string for the logging level helga should use for process logging

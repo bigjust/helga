@@ -47,7 +47,6 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black>=26.5.1",
     "ruff>=0.16.3",
     "mypy>=2.3.0",
     "pre-commit>=4.6.2",
@@ -93,24 +92,6 @@ packages = {find = {}}
 helga = ["webhooks/logger/*.mustache"]
 
 # Black configuration
-[tool.black]
-line-length = 100
-target-version = ["py38", "py39", "py310", "py311", "py312", "py313", "py314"]
-include = '\.pyi?$'
-extend-exclude = '''
-/(
-  # directories
-  \.eggs
-  | \.git
-  | \.hg
-  | \.mypy_cache
-  | \.tox
-  | \.venv
-  | build
-  | dist
-)/
-'''
-
 # Ruff configuration
 [tool.ruff]
 line-length = 100
@@ -127,7 +108,7 @@ select = [
     "UP",  # pyupgrade
 ]
 ignore = [
-    "E501",  # line too long, handled by black
+    "E501",  # line too long, handled by ruff-format
     "B008",  # do not perform function calls in argument defaults
     "B007",  # loop control variable not used (common in dict iteration)
     "B017",  # assertRaises(Exception) is fine for tests
@@ -233,11 +214,10 @@ commands =
 [testenv:lint]
 deps =
     ruff
-    black
 skip_install = true
 commands =
     ruff check helga
-    black --check helga
+    ruff format --check helga
 
 [testenv:type]
 deps =

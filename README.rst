@@ -13,8 +13,6 @@ helga
 .. image:: https://img.shields.io/pypi/pyversions/helga.svg
     :target: https://pypi.python.org/pypi/helga
 
-.. image:: https://img.shields.io/badge/code%20style-black-000000.svg
-    :target: https://github.com/psf/black
 
 
 About
@@ -57,6 +55,26 @@ Run helga and type commands directly::
 
 Set ``LOG_LEVEL = 'WARNING'`` (or use ``LOG_FILE``) to keep log output from interleaving with the
 chat output.
+
+Discord Backend
+^^^^^^^^^^^^^^^^
+Helga can also connect to `Discord`_ as a bot application, talking directly to the Discord
+gateway and REST APIs (no ``discord.py`` dependency required). To use it, create a bot
+application and set ``SERVER['TYPE']`` to ``'discord'`` along with the bot token::
+
+    SERVER = {
+        'TYPE': 'discord',
+        'API_KEY': 'your-bot-token',
+    }
+
+The bot's username is configured in the Discord developer portal and is detected
+automatically, so there's no need to set :data:`~helga.settings.NICK` or
+:data:`~helga.settings.COMMAND_PREFIX_BOTNICK`. See ``helga/comm/discord.py`` for details,
+including the ``DISCORD_INTENTS`` setting for privileged gateway intents.
+
+See ``settings_discord_example.py`` for a starting configuration, and
+``docker-compose.discord.yml`` to run the bot in a container (with Postgres for
+plugins that need persistence).
 
 
 Contributing
@@ -163,6 +181,7 @@ for details on:
 - Enhanced Docker configuration
 - Automated dependency updates
 
+.. _`Discord`: https://discord.com/
 .. _`GPL`: https://github.com/bigjust/helga/blob/master/LICENSE-GPL
 .. _`MIT`: https://github.com/bigjust/helga/blob/master/LICENSE-MIT
 .. _`Twisted`: https://twistedmatrix.com/trac/

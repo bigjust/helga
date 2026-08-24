@@ -1,0 +1,74 @@
+# Discord bot compose file. The Docker image runs helga with the
+# settings_discord_docker.py settings file, which reads configuration
+# from the HELGA_* environment variables below.
+#
+# Usage:
+#   HELGA_DISCORD_TOKEN=<token> docker compose -f docker-compose.discord.yml up
+#
+# settings_discord_docker.py is mounted over the image's /etc/helga_settings.py
+# so the env vars below drive the bot.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: helga-postgres
+    platform: linux/amd64
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=helga
+      - POSTGRES_USER=helga
+      - POSTGRES_PASSWORD=helga
+    networks:
+      - helga-network
+    healthcheck:
+      test: [CMD-SHELL, pg_isready -U helga -d helga]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+  helga:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: helga-bot
+    environment:
+      - HELGA_DISCORD_TOKEN=${HELGA_DISCORD_TOKEN:?set HELGA_DISCORD_TOKEN in your .env}
+      - HELGA_NICK=helga
+      - HELGA_CHANNEL_LOGGING=0
+      - HELGA_DATABASE_HOST=postgres
+      - HELGA_DATABASE_PORT=5432
+      - HELGA_DATABASE_DB=helga
+      - HELGA_DATABASE_USERNAME=helga
+      - HELGA_DATABASE_PASSWORD=helga
+      - HELGA_LOG_LEVEL=DEBUG
+      # Prefer mounted source over site-packages so operator restart picks up edits
+      - PYTHONPATH=/app
+    volumes:
+      - ./helga:/app/helga:Z
+      - ./settings_discord_docker.py:/etc/helga_settings.py:Z
+      - helga_logs:/var/log/helga
+      - helga_data:/var/lib/helga
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - helga-network
+    restart: unless-stopped
+
+networks:
+  helga-network:
+    driver: bridge
+    name: helga-network
+
+volumes:
+  postgres_data:
+    name: helga-postgres-data
+  helga_logs:
+    name: helga-logs
+  helga_data:
+    name: helga-data
