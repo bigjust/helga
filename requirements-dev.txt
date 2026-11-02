@@ -22,7 +22,7 @@ mypy>=2.4.1
 pre-commit>=4.6.2
 pretend>=1.0.9
 # Testing
-pytest>=9.1.1
+pytest>=9.2.0
 pytest-asyncio>=1.4.1
 pytest-cov>=7.1.0
 pytest-mock>=3.17.0
