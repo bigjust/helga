@@ -1,6 +1,6 @@
 # Multi-stage build for smaller, more secure images
 # Stage 1: Builder
-FROM python:3.14-slim AS builder
+FROM python:3.15-slim AS builder
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
@@ -37,7 +37,7 @@ WORKDIR /app
 RUN pip install .
 
 # Stage 2: Runtime
-FROM python:3.14-slim
+FROM python:3.15-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
